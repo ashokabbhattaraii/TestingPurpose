@@ -29,7 +29,9 @@ export default function NewRequestPage() {
   const createRequest = useCreateRequest();
   const [title, setTitle] = useState("");
   const [description, setDescription] = useState("");
-  const [category, setCategory] = useState<RequestCategory>("pantry");
+  const [otherCategory, setOtherCategory] = useState("");
+  const [category, setCategory] =
+    useState<RequestCategory>("Food and Supplies");
   const [priority, setPriority] = useState<"low" | "medium" | "high">("medium");
 
   const handleSubmit = (e: React.FormEvent) => {
@@ -38,13 +40,13 @@ export default function NewRequestPage() {
       toast.error("Please fill in all fields.");
       return;
     }
-
     createRequest.mutate(
       {
         title,
         description,
         category,
         priority,
+        otherCategory: category === "Other" ? otherCategory : undefined,
         status: "pending",
         createdBy: user?.id || "",
         createdByName: user?.name || "",
@@ -109,10 +111,14 @@ export default function NewRequestPage() {
                     <SelectValue />
                   </SelectTrigger>
                   <SelectContent>
-                    <SelectItem value="Coffee">Coffee</SelectItem>
-                    <SelectItem value="utility">Utility</SelectItem>
-                    <SelectItem value="cleaning">Cleaning</SelectItem>
-                    <SelectItem value="other">Other</SelectItem>
+                    <SelectItem value="Food and Supplies">
+                      Food and Supplies
+                    </SelectItem>
+                    <SelectItem value="Office Maintenance">
+                      Office Maintenance
+                    </SelectItem>
+                    <SelectItem value="Cleaning">Cleaning</SelectItem>
+                    <SelectItem value="Other">Other</SelectItem>
                   </SelectContent>
                 </Select>
               </div>
@@ -136,6 +142,18 @@ export default function NewRequestPage() {
                 </Select>
               </div>
             </div>
+
+            {category === "Other" && (
+              <div className="flex flex-col gap-2">
+                <Label htmlFor="otherCategory">Specify Category</Label>
+                <Input
+                  id="otherCategory"
+                  placeholder="Please specify your category"
+                  value={otherCategory}
+                  onChange={(e) => setOtherCategory(e.target.value)}
+                />
+              </div>
+            )}
 
             <Button
               type="submit"

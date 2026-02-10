@@ -1,74 +1,68 @@
-"use client"
+"use client";
 
-import { useAuth } from "@/lib/auth-context"
+import { useAuth } from "@/lib/auth-context";
 import {
   useServiceRequest,
   useUpdateRequestStatus,
   useAssignRequest,
   useUsers,
-} from "@/lib/queries"
-import { useParams } from "next/navigation"
-import {
-  Card,
-  CardContent,
-  CardHeader,
-  CardTitle,
-} from "@/components/ui/card"
-import { Button } from "@/components/ui/button"
-import { Skeleton } from "@/components/ui/skeleton"
-import { StatusBadge } from "@/components/status-badge"
-import { Badge } from "@/components/ui/badge"
+} from "@/lib/queries";
+import { useParams } from "next/navigation";
+import { Card, CardContent, CardHeader, CardTitle } from "@/components/ui/card";
+import { Button } from "@/components/ui/button";
+import { Skeleton } from "@/components/ui/skeleton";
+import { StatusBadge } from "@/components/status-badge";
+import { Badge } from "@/components/ui/badge";
 import {
   Select,
   SelectContent,
   SelectItem,
   SelectTrigger,
   SelectValue,
-} from "@/components/ui/select"
-import { ArrowLeft, Calendar, User, Tag, Flag, UserPlus } from "lucide-react"
-import Link from "next/link"
-import { format } from "date-fns"
-import { useState } from "react"
-import type { RequestStatus } from "@/lib/types"
-import { toast } from "sonner"
+} from "@/components/ui/select";
+import { ArrowLeft, Calendar, User, Tag, Flag, UserPlus } from "lucide-react";
+import Link from "next/link";
+import { format } from "date-fns";
+import { useState } from "react";
+import type { RequestStatus } from "@/lib/types";
+import { toast } from "sonner";
 
 const priorityConfig = {
   low: { label: "Low", className: "bg-muted text-muted-foreground" },
   medium: { label: "Medium", className: "bg-amber-100 text-amber-800" },
   high: { label: "High", className: "bg-red-100 text-red-800" },
-}
+};
 
 export default function RequestDetailPage() {
-  const { user } = useAuth()
-  const params = useParams()
-  const id = params.id as string
-  const { data: request, isLoading } = useServiceRequest(id)
-  const { data: allUsers } = useUsers()
-  const updateStatus = useUpdateRequestStatus()
-  const assignRequest = useAssignRequest()
-  const [newStatus, setNewStatus] = useState<RequestStatus | "">("")
-  const [assignTo, setAssignTo] = useState<string>("")
+  const { user } = useAuth();
+  const params = useParams();
+  const id = params.id as string;
+  const { data: request, isLoading } = useServiceRequest(id);
+  const { data: allUsers } = useUsers();
+  const updateStatus = useUpdateRequestStatus();
+  const assignRequest = useAssignRequest();
+  const [newStatus, setNewStatus] = useState<RequestStatus | "">("");
+  const [assignTo, setAssignTo] = useState<string>("");
 
-  const isAdminOrSuper =
-    user?.role === "admin" || user?.role === "superadmin"
+  const isAdminOrSuper = user?.role === "admin" || user?.role === "superadmin";
 
   const handleStatusUpdate = () => {
-    if (!newStatus || !request) return
+    if (!newStatus || !request) return;
     updateStatus.mutate(
       { id: request.id, status: newStatus },
       {
         onSuccess: () => {
-          toast.success(`Request status updated to ${newStatus}.`)
-          setNewStatus("")
+          toast.success(`Request status updated to ${newStatus}.`);
+          setNewStatus("");
         },
-      }
-    )
-  }
+      },
+    );
+  };
 
   const handleAssign = () => {
-    if (!assignTo || !request || !user) return
-    const targetUser = allUsers?.find((u) => u.id === assignTo)
-    if (!targetUser) return
+    if (!assignTo || !request || !user) return;
+    const targetUser = allUsers?.find((u) => u.id === assignTo);
+    if (!targetUser) return;
     assignRequest.mutate(
       {
         requestId: request.id,
@@ -78,12 +72,14 @@ export default function RequestDetailPage() {
       },
       {
         onSuccess: () => {
-          toast.success(`Request assigned to ${targetUser.name}. They have been notified.`)
-          setAssignTo("")
+          toast.success(
+            `Request assigned to ${targetUser.name}. They have been notified.`,
+          );
+          setAssignTo("");
         },
-      }
-    )
-  }
+      },
+    );
+  };
 
   if (isLoading) {
     return (
@@ -91,7 +87,7 @@ export default function RequestDetailPage() {
         <Skeleton className="mb-4 h-8 w-32" />
         <Skeleton className="h-64" />
       </div>
-    )
+    );
   }
 
   if (!request) {
@@ -102,10 +98,10 @@ export default function RequestDetailPage() {
           <Link href="/dashboard/requests">Back to Requests</Link>
         </Button>
       </div>
-    )
+    );
   }
 
-  const pConfig = priorityConfig[request.priority]
+  const pConfig = priorityConfig[request.priority];
 
   return (
     <div className="mx-auto max-w-2xl">
@@ -143,7 +139,7 @@ export default function RequestDetailPage() {
               <div>
                 <p className="text-xs text-muted-foreground">Category</p>
                 <p className="text-sm capitalize text-foreground">
-                  {request.category}
+                  {request.category} - {request.otherCategory || "N/A"}
                 </p>
               </div>
             </div>
@@ -204,10 +200,7 @@ export default function RequestDetailPage() {
                   </p>
                 </div>
                 <div className="flex gap-2">
-                  <Select
-                    value={assignTo}
-                    onValueChange={setAssignTo}
-                  >
+                  <Select value={assignTo} onValueChange={setAssignTo}>
                     <SelectTrigger className="flex-1">
                       <SelectValue placeholder="Select a team member" />
                     </SelectTrigger>
@@ -247,9 +240,7 @@ export default function RequestDetailPage() {
                 <div className="flex gap-2">
                   <Select
                     value={newStatus}
-                    onValueChange={(v) =>
-                      setNewStatus(v as RequestStatus)
-                    }
+                    onValueChange={(v) => setNewStatus(v as RequestStatus)}
                   >
                     <SelectTrigger className="flex-1">
                       <SelectValue placeholder="Select new status" />
@@ -273,5 +264,5 @@ export default function RequestDetailPage() {
         </CardContent>
       </Card>
     </div>
-  )
+  );
 }

@@ -5,7 +5,7 @@ import type {
   AnalyticsData,
   LunchToken,
   Notification,
-} from "./types"
+} from "./types";
 
 export const users: User[] = [
   {
@@ -132,14 +132,15 @@ export const users: User[] = [
       assignments: true,
     },
   },
-]
+];
 
 export const serviceRequests: ServiceRequest[] = [
   {
     id: "SR-001",
     title: "Restock coffee and tea supplies",
-    description: "The pantry is running low on coffee beans, tea bags, and sugar packets.",
-    category: "pantry",
+    description:
+      "The pantry is running low on coffee beans, tea bags, and sugar packets.",
+    category: "Food and Supplies",
     status: "pending",
     priority: "medium",
     createdBy: "u1",
@@ -150,8 +151,9 @@ export const serviceRequests: ServiceRequest[] = [
   {
     id: "SR-002",
     title: "AC not working in meeting room B",
-    description: "The air conditioning unit in meeting room B is blowing warm air. Needs servicing.",
-    category: "utility",
+    description:
+      "The air conditioning unit in meeting room B is blowing warm air. Needs servicing.",
+    category: "Office Maintenance",
     status: "in-progress",
     priority: "high",
     createdBy: "u2",
@@ -164,8 +166,10 @@ export const serviceRequests: ServiceRequest[] = [
   {
     id: "SR-003",
     title: "Deep cleaning for 3rd floor",
-    description: "Requesting a thorough deep cleaning of the 3rd floor workspace area.",
-    category: "cleaning",
+    description:
+      "Requesting a thorough deep cleaning of the 3rd floor workspace area.",
+    category: "Other",
+    otherCategory: "Deep Cleaning",
     status: "resolved",
     priority: "low",
     createdBy: "u1",
@@ -179,7 +183,7 @@ export const serviceRequests: ServiceRequest[] = [
     id: "SR-004",
     title: "Refill water dispenser on 2nd floor",
     description: "Water dispenser near the engineering bay is empty.",
-    category: "pantry",
+    category: "Food and Supplies",
     status: "resolved",
     priority: "medium",
     createdBy: "u2",
@@ -192,8 +196,9 @@ export const serviceRequests: ServiceRequest[] = [
   {
     id: "SR-005",
     title: "Replace broken desk lamp",
-    description: "The desk lamp at workstation E-12 is flickering and needs replacement.",
-    category: "utility",
+    description:
+      "The desk lamp at workstation E-12 is flickering and needs replacement.",
+    category: "Office Maintenance",
     status: "pending",
     priority: "low",
     createdBy: "u1",
@@ -205,7 +210,7 @@ export const serviceRequests: ServiceRequest[] = [
     id: "SR-006",
     title: "Restock printer paper",
     description: "All printers on the 2nd floor are out of A4 paper.",
-    category: "other",
+    category: "Office Maintenance",
     status: "in-progress",
     priority: "high",
     createdBy: "u2",
@@ -218,8 +223,9 @@ export const serviceRequests: ServiceRequest[] = [
   {
     id: "SR-007",
     title: "Pest control for kitchen area",
-    description: "Noticed insects in the office kitchen near the storage cabinets.",
-    category: "cleaning",
+    description:
+      "Noticed insects in the office kitchen near the storage cabinets.",
+    category: "Cleaning",
     status: "pending",
     priority: "high",
     createdBy: "u1",
@@ -231,7 +237,7 @@ export const serviceRequests: ServiceRequest[] = [
     id: "SR-008",
     title: "Request for standing desk",
     description: "Would like a standing desk converter for workstation E-05.",
-    category: "other",
+    category: "Office Maintenance",
     status: "rejected",
     priority: "low",
     createdBy: "u2",
@@ -242,8 +248,10 @@ export const serviceRequests: ServiceRequest[] = [
   {
     id: "SR-009",
     title: "Microwave repair in pantry",
-    description: "The microwave in the 2nd floor pantry is not heating properly.",
-    category: "utility",
+    description:
+      "The microwave in the 2nd floor pantry is not heating properly.",
+    category: "Other",
+    otherCategory: "Appliance Repair",
     status: "in-progress",
     priority: "medium",
     createdBy: "u1",
@@ -257,7 +265,7 @@ export const serviceRequests: ServiceRequest[] = [
     id: "SR-010",
     title: "Restock snacks in pantry",
     description: "The snack shelf in the main pantry has been empty for days.",
-    category: "pantry",
+    category: "Food and Supplies",
     status: "resolved",
     priority: "low",
     createdBy: "u2",
@@ -267,7 +275,7 @@ export const serviceRequests: ServiceRequest[] = [
     createdAt: "2026-01-22T10:00:00Z",
     updatedAt: "2026-01-23T14:00:00Z",
   },
-]
+];
 
 export const announcements: Announcement[] = [
   {
@@ -310,15 +318,15 @@ export const announcements: Announcement[] = [
     createdAt: "2026-01-28T09:00:00Z",
     pinned: false,
   },
-]
+];
 
 // Sort announcements with pinned ones first
 export function getSortedAnnouncements() {
   return [...announcements].sort((a, b) => {
-    if (a.pinned && !b.pinned) return -1
-    if (!a.pinned && b.pinned) return 1
-    return new Date(b.createdAt).getTime() - new Date(a.createdAt).getTime()
-  })
+    if (a.pinned && !b.pinned) return -1;
+    if (!a.pinned && b.pinned) return 1;
+    return new Date(b.createdAt).getTime() - new Date(a.createdAt).getTime();
+  });
 }
 
 export const lunchTokens: LunchToken[] = [
@@ -346,14 +354,15 @@ export const lunchTokens: LunchToken[] = [
     preference: "veg",
     collectedAt: "2026-02-08T10:45:00Z",
   },
-]
+];
 
 export const notifications: Notification[] = [
   {
     id: "n1",
     userId: "u3",
     title: "New Assignment",
-    message: "You have been assigned to request SR-002: AC not working in meeting room B",
+    message:
+      "You have been assigned to request SR-002: AC not working in meeting room B",
     read: false,
     createdAt: "2026-02-08T10:00:00Z",
     link: "/dashboard/requests/SR-002",
@@ -367,7 +376,7 @@ export const notifications: Notification[] = [
     createdAt: "2026-02-06T09:00:00Z",
     link: "/dashboard/requests/SR-006",
   },
-]
+];
 
 export const analyticsData: AnalyticsData = {
   totalRequests: 10,
@@ -376,8 +385,8 @@ export const analyticsData: AnalyticsData = {
   resolvedRequests: 3,
   avgResolutionTimeHours: 38,
   requestsByCategory: [
-    { category: "Pantry", count: 3 },
-    { category: "Utility", count: 3 },
+    { category: "Food and Supplies", count: 3 },
+    { category: "Office Maintenance", count: 3 },
     { category: "Cleaning", count: 2 },
     { category: "Other", count: 2 },
   ],
@@ -394,4 +403,4 @@ export const analyticsData: AnalyticsData = {
     { status: "Resolved", count: 3 },
     { status: "Rejected", count: 1 },
   ],
-}
+};

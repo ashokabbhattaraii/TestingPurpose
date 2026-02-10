@@ -1,19 +1,19 @@
-"use client"
+"use client";
 
-import { useAuth } from "@/lib/auth-context"
+import { useAuth } from "@/lib/auth-context";
 import {
   Card,
   CardContent,
   CardDescription,
   CardHeader,
   CardTitle,
-} from "@/components/ui/card"
-import { Avatar, AvatarFallback } from "@/components/ui/avatar"
-import { Badge } from "@/components/ui/badge"
-import { Building2, ArrowRight, Chrome } from "lucide-react"
-import { Button } from "@/components/ui/button"
-import Link from "next/link"
-import { users } from "@/lib/data"
+} from "@/components/ui/card";
+import { Avatar, AvatarFallback } from "@/components/ui/avatar";
+import { Badge } from "@/components/ui/badge";
+import { Building2, ArrowRight, Chrome } from "lucide-react";
+import { Button } from "@/components/ui/button";
+import Link from "next/link";
+import { users } from "@/lib/data";
 
 function getInitials(name: string) {
   return name
@@ -21,30 +21,30 @@ function getInitials(name: string) {
     .map((n) => n[0])
     .join("")
     .toUpperCase()
-    .slice(0, 2)
+    .slice(0, 2);
 }
 
 const roleLabel: Record<string, string> = {
   employee: "Employee",
   admin: "Admin",
   superadmin: "Super Admin",
-}
+};
 
 const roleBadgeClass: Record<string, string> = {
   employee: "bg-primary/10 text-primary",
   admin: "bg-primary/15 text-primary",
   superadmin: "bg-primary/20 text-primary",
-}
+};
 
 export function LoginPage() {
-  const { login } = useAuth()
+  const { login } = useAuth();
 
   const handleLogin = (userId: string) => {
-    login(userId)
-  }
+    login(userId);
+  };
 
-  const demoUser = users[0]
-  const otherUsers = users.slice(1)
+  const demoUser = users[0];
+  const otherUsers = users.slice(1);
 
   return (
     <div className="flex min-h-screen items-center justify-center bg-gradient-to-b from-slate-50 via-purple-50/20 to-white px-4 relative">
@@ -57,7 +57,10 @@ export function LoginPage() {
       <div className="w-full max-w-2xl">
         {/* Header with back button */}
         <div className="mb-8">
-          <Link href="/" className="inline-flex items-center gap-2 text-primary hover:text-primary/80 font-medium transition-colors mb-8">
+          <Link
+            href="/"
+            className="inline-flex items-center gap-2 text-primary hover:text-primary/80 font-medium transition-colors mb-8"
+          >
             <ArrowRight className="h-4 w-4 rotate-180" />
             Back to home
           </Link>
@@ -103,7 +106,9 @@ export function LoginPage() {
                       fill="#EA4335"
                     />
                   </svg>
-                  <span className="font-semibold text-slate-900">Continue with Google</span>
+                  <span className="font-semibold text-slate-900">
+                    Continue with Google
+                  </span>
                 </button>
               </div>
 
@@ -113,7 +118,9 @@ export function LoginPage() {
                   <div className="w-full border-t border-slate-200" />
                 </div>
                 <div className="relative flex justify-center text-xs">
-                  <span className="bg-white px-3 text-slate-600 font-medium">or use demo account</span>
+                  <span className="bg-white px-3 text-slate-600 font-medium">
+                    or use demo account
+                  </span>
                 </div>
               </div>
             </div>
@@ -139,19 +146,31 @@ export function LoginPage() {
                         : "border-slate-200 hover:border-primary/40 hover:bg-primary/5"
                     }`}
                   >
-                    <Avatar className={`h-10 w-10 flex-shrink-0 border-2 ${
-                      idx === 0 ? "border-primary/50 bg-primary/10" : "border-slate-300"
-                    }`}>
-                      <AvatarFallback className={`text-xs font-bold ${
-                        idx === 0 ? "bg-primary/25 text-primary" : "bg-slate-200 text-slate-700"
-                      }`}>
+                    <Avatar
+                      className={`h-10 w-10 flex-shrink-0 border-2 ${
+                        idx === 0
+                          ? "border-primary/50 bg-primary/10"
+                          : "border-slate-300"
+                      }`}
+                    >
+                      <AvatarFallback
+                        className={`text-xs font-bold ${
+                          idx === 0
+                            ? "bg-primary/25 text-primary"
+                            : "bg-slate-200 text-slate-700"
+                        }`}
+                      >
                         {getInitials(u.name)}
                       </AvatarFallback>
                     </Avatar>
                     <div className="flex flex-1 flex-col">
                       <span className="text-sm font-semibold text-slate-900">
                         {u.name}
-                        {idx === 0 && <span className="text-primary ml-2 text-xs font-bold">Demo</span>}
+                        {idx === 0 && (
+                          <span className="text-primary ml-2 text-xs font-bold">
+                            Demo
+                          </span>
+                        )}
                       </span>
                       <span className="text-xs text-slate-600">{u.email}</span>
                     </div>
@@ -166,7 +185,8 @@ export function LoginPage() {
               </div>
 
               <p className="text-center text-xs text-slate-600 mt-2">
-                Select any account to sign in. Roles are managed by the Super Admin.
+                Select any account to sign in. Roles are managed by the Super
+                Admin.
               </p>
             </div>
           </div>
@@ -176,12 +196,15 @@ export function LoginPage() {
         <div className="mt-8 text-center">
           <p className="text-xs text-slate-600">
             Don't have an account?{" "}
-            <Link href="/" className="text-primary hover:text-primary/80 font-semibold transition-colors">
+            <Link
+              href="/"
+              className="text-primary hover:text-primary/80 font-semibold transition-colors"
+            >
               Back to home
             </Link>
           </p>
         </div>
       </div>
     </div>
-  )
+  );
 }

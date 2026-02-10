@@ -1,46 +1,45 @@
-"use client"
+"use client";
 
-import { useAuth } from "@/lib/auth-context"
-import { useServiceRequests } from "@/lib/queries"
-import { Card, CardContent } from "@/components/ui/card"
-import { Button } from "@/components/ui/button"
-import { Input } from "@/components/ui/input"
-import { Skeleton } from "@/components/ui/skeleton"
-import { StatusBadge } from "@/components/status-badge"
+import { useAuth } from "@/lib/auth-context";
+import { useServiceRequests } from "@/lib/queries";
+import { Card, CardContent } from "@/components/ui/card";
+import { Button } from "@/components/ui/button";
+import { Input } from "@/components/ui/input";
+import { Skeleton } from "@/components/ui/skeleton";
+import { StatusBadge } from "@/components/status-badge";
 import {
   Select,
   SelectContent,
   SelectItem,
   SelectTrigger,
   SelectValue,
-} from "@/components/ui/select"
-import { Plus, Search } from "lucide-react"
-import Link from "next/link"
-import { format } from "date-fns"
-import { useState } from "react"
-import type { RequestStatus, RequestCategory } from "@/lib/types"
+} from "@/components/ui/select";
+import { Plus, Search } from "lucide-react";
+import Link from "next/link";
+import { format } from "date-fns";
+import { useState } from "react";
+import type { RequestStatus, RequestCategory } from "@/lib/types";
 
 export default function RequestsPage() {
-  const { user } = useAuth()
-  const isEmployee = user?.role === "employee"
+  const { user } = useAuth();
+  const isEmployee = user?.role === "employee";
   const { data: requests, isLoading } = useServiceRequests(
-    isEmployee ? user?.id : undefined
-  )
-  const [search, setSearch] = useState("")
-  const [statusFilter, setStatusFilter] = useState<string>("all")
-  const [categoryFilter, setCategoryFilter] = useState<string>("all")
+    isEmployee ? user?.id : undefined,
+  );
+  const [search, setSearch] = useState("");
+  const [statusFilter, setStatusFilter] = useState<string>("all");
+  const [categoryFilter, setCategoryFilter] = useState<string>("all");
 
   const filtered =
     requests?.filter((req) => {
       const matchSearch =
         req.title.toLowerCase().includes(search.toLowerCase()) ||
-        req.id.toLowerCase().includes(search.toLowerCase())
-      const matchStatus =
-        statusFilter === "all" || req.status === statusFilter
+        req.id.toLowerCase().includes(search.toLowerCase());
+      const matchStatus = statusFilter === "all" || req.status === statusFilter;
       const matchCategory =
-        categoryFilter === "all" || req.category === categoryFilter
-      return matchSearch && matchStatus && matchCategory
-    }) ?? []
+        categoryFilter === "all" || req.category === categoryFilter;
+      return matchSearch && matchStatus && matchCategory;
+    }) ?? [];
 
   return (
     <div className="flex flex-col gap-6">
@@ -129,7 +128,11 @@ export default function RequestsPage() {
                         {req.id}
                       </span>
                       <span className="text-xs capitalize text-muted-foreground">
-                        {req.category}
+                        {req.category}{" "}
+                        {req.category === ("Other" as RequestCategory) &&
+                        req.otherCategory
+                          ? `- ${req.otherCategory}`
+                          : ""}
                       </span>
                     </div>
                     <span className="text-sm font-medium text-foreground">
@@ -154,5 +157,5 @@ export default function RequestsPage() {
         </div>
       )}
     </div>
-  )
+  );
 }
