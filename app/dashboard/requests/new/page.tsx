@@ -61,7 +61,7 @@ export default function NewRequestPage() {
     createRequest.mutate(
       {
         title: values.title,
-        description: values.description,
+        description: values.description || "",
         category: values.category,
         priority: values.priority,
         otherCategory:
@@ -112,7 +112,7 @@ export default function NewRequestPage() {
                 name="title"
                 render={({ field }) => (
                   <FormItem>
-                    <FormLabel>Title</FormLabel>
+                    <FormLabel>Title *</FormLabel>
                     <FormControl>
                       <Input
                         placeholder="Brief description of your request"
@@ -129,7 +129,7 @@ export default function NewRequestPage() {
                 name="description"
                 render={({ field }) => (
                   <FormItem>
-                    <FormLabel>Description</FormLabel>
+                    <FormLabel>Description (optional)</FormLabel>
                     <FormControl>
                       <Textarea
                         placeholder="Provide details about your request..."
@@ -148,7 +148,7 @@ export default function NewRequestPage() {
                   name="category"
                   render={({ field }) => (
                     <FormItem>
-                      <FormLabel>Category</FormLabel>
+                      <FormLabel>Category *</FormLabel>
                       <Select
                         onValueChange={field.onChange}
                         defaultValue={field.value}
@@ -178,7 +178,7 @@ export default function NewRequestPage() {
                   name="priority"
                   render={({ field }) => (
                     <FormItem>
-                      <FormLabel>Priority</FormLabel>
+                      <FormLabel>Priority *</FormLabel>
                       <Select
                         onValueChange={field.onChange}
                         defaultValue={field.value}
@@ -211,7 +211,7 @@ export default function NewRequestPage() {
                   name="otherCategory"
                   render={({ field }) => (
                     <FormItem>
-                      <FormLabel>Specify Category</FormLabel>
+                      <FormLabel>Specify Category *</FormLabel>
                       <FormControl>
                         <Input
                           placeholder="Please specify your category (3-15 characters)"
