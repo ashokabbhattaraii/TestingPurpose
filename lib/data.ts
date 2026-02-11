@@ -263,7 +263,7 @@ export const serviceRequests: ServiceRequest[] = [
   },
   {
     id: "SR-010",
-    title: "Restock snacks in pantry",
+    title: "Restock snacks in ",
     description: "The snack shelf in the main pantry has been empty for days.",
     category: "Food and Supplies",
     status: "resolved",
