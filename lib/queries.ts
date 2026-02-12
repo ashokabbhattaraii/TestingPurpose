@@ -1,5 +1,11 @@
-import { useQuery, useMutation, useQueryClient } from "@tanstack/react-query"
-import type { ServiceRequest, RequestStatus, LunchToken, MealPreference, Notification } from "./types"
+import { useQuery, useMutation, useQueryClient } from "@tanstack/react-query";
+import type {
+  ServiceRequest,
+  RequestStatus,
+  LunchToken,
+  MealPreference,
+  Notification,
+} from "./types";
 import {
   serviceRequests,
   announcements,
@@ -8,11 +14,11 @@ import {
   lunchTokens,
   notifications,
   getSortedAnnouncements,
-} from "./data"
+} from "./data";
 
 // Simulate async fetch
 function delay<T>(data: T, ms = 300): Promise<T> {
-  return new Promise((resolve) => setTimeout(() => resolve(data), ms))
+  return new Promise((resolve) => setTimeout(() => resolve(data), ms));
 }
 
 export function useServiceRequests(userId?: string) {
@@ -21,114 +27,108 @@ export function useServiceRequests(userId?: string) {
     queryFn: () => {
       const filtered = userId
         ? serviceRequests.filter((r) => r.createdBy === userId)
-        : serviceRequests
-      return delay([...filtered])
+        : serviceRequests;
+      return delay([...filtered]);
     },
-  })
+  });
 }
 
 export function useServiceRequest(id: string) {
   return useQuery({
     queryKey: ["serviceRequest", id],
     queryFn: () => {
-      const found = serviceRequests.find((r) => r.id === id)
-      return delay(found || null)
+      const found = serviceRequests.find((r) => r.id === id);
+      return delay(found || null);
     },
-  })
+  });
 }
 
 export function useAnnouncements() {
   return useQuery({
     queryKey: ["announcements"],
     queryFn: () => delay(getSortedAnnouncements()),
-  })
+  });
 }
 
 export function useUsers() {
   return useQuery({
     queryKey: ["users"],
     queryFn: () => delay([...users]),
-  })
+  });
 }
 
 export function useAnalytics() {
   return useQuery({
     queryKey: ["analytics"],
     queryFn: () => delay({ ...analyticsData }),
-  })
+  });
 }
 
 export function useCreateRequest() {
-  const queryClient = useQueryClient()
+  const queryClient = useQueryClient();
   return useMutation({
     mutationFn: (
-      newRequest: Omit<ServiceRequest, "id" | "createdAt" | "updatedAt">
+      newRequest: Omit<ServiceRequest, "id" | "createdAt" | "updatedAt">,
     ) => {
       const request: ServiceRequest = {
         ...newRequest,
         id: `SR-${String(serviceRequests.length + 1).padStart(3, "0")}`,
         createdAt: new Date().toISOString(),
         updatedAt: new Date().toISOString(),
-      }
-      serviceRequests.unshift(request)
-      return delay(request)
+      };
+      serviceRequests.unshift(request);
+      return delay(request);
     },
     onSuccess: () => {
-      queryClient.invalidateQueries({ queryKey: ["serviceRequests"] })
-      queryClient.invalidateQueries({ queryKey: ["analytics"] })
+      queryClient.invalidateQueries({ queryKey: ["serviceRequests"] });
+      queryClient.invalidateQueries({ queryKey: ["analytics"] });
     },
-  })
+  });
 }
 
 export function useUpdateUserRole() {
-  const queryClient = useQueryClient()
+  const queryClient = useQueryClient();
   return useMutation({
     mutationFn: ({
       userId,
       role,
     }: {
-      userId: string
-      role: import("./types").UserRole
+      userId: string;
+      role: import("./types").UserRole;
     }) => {
-      const user = users.find((u) => u.id === userId)
+      const user = users.find((u) => u.id === userId);
       if (user) {
-        user.role = role
+        user.role = role;
       }
-      return delay(user)
+      return delay(user);
     },
     onSuccess: () => {
-      queryClient.invalidateQueries({ queryKey: ["users"] })
+      queryClient.invalidateQueries({ queryKey: ["users"] });
     },
-  })
+  });
 }
 
 export function useUpdateRequestStatus() {
-  const queryClient = useQueryClient()
+  const queryClient = useQueryClient();
   return useMutation({
-    mutationFn: ({
-      id,
-      status,
-    }: {
-      id: string
-      status: RequestStatus
-    }) => {
-      const request = serviceRequests.find((r) => r.id === id)
+    mutationFn: ({ id, status }: { id: string; status: RequestStatus }) => {
+      const request = serviceRequests.find((r) => r.id === id);
       if (request) {
-        request.status = status
-        request.updatedAt = new Date().toISOString()
+        request.status = status;
+        request.updatedAt = new Date().toISOString();
       }
-      return delay(request)
+      return delay(request);
     },
     onSuccess: () => {
-      queryClient.invalidateQueries({ queryKey: ["serviceRequests"] })
-      queryClient.invalidateQueries({ queryKey: ["serviceRequest"] })
-      queryClient.invalidateQueries({ queryKey: ["analytics"] })
+      queryClient.invalidateQueries({ queryKey: ["serviceRequests"] });
+      queryClient.invalidateQueries({ queryKey: ["serviceRequest"] });
+      queryClient.invalidateQueries({ queryKey: ["analytics"] });
     },
-  })
+  });
 }
 
 export function useAssignRequest() {
-  const queryClient = useQueryClient()
+  const queryClient = useQueryClient();
   return useMutation({
     mutationFn: ({
       requestId,
@@ -136,18 +136,18 @@ export function useAssignRequest() {
       assignedToName,
       assignedByName,
     }: {
-      requestId: string
-      assignedToId: string
-      assignedToName: string
-      assignedByName: string
+      requestId: string;
+      assignedToId: string;
+      assignedToName: string;
+      assignedByName: string;
     }) => {
-      const request = serviceRequests.find((r) => r.id === requestId)
+      const request = serviceRequests.find((r) => r.id === requestId);
       if (request) {
-        request.assignedTo = assignedToId
-        request.assignedToName = assignedToName
-        request.updatedAt = new Date().toISOString()
+        request.assignedTo = assignedToId;
+        request.assignedToName = assignedToName;
+        request.updatedAt = new Date().toISOString();
         if (request.status === "pending") {
-          request.status = "in-progress"
+          request.status = "in-progress";
         }
       }
       // Create a notification for the assigned user
@@ -159,17 +159,17 @@ export function useAssignRequest() {
         read: false,
         createdAt: new Date().toISOString(),
         link: `/dashboard/requests/${requestId}`,
-      }
-      notifications.unshift(notif)
-      return delay(request)
+      };
+      notifications.unshift(notif);
+      return delay(request);
     },
     onSuccess: () => {
-      queryClient.invalidateQueries({ queryKey: ["serviceRequests"] })
-      queryClient.invalidateQueries({ queryKey: ["serviceRequest"] })
-      queryClient.invalidateQueries({ queryKey: ["notifications"] })
-      queryClient.invalidateQueries({ queryKey: ["analytics"] })
+      queryClient.invalidateQueries({ queryKey: ["serviceRequests"] });
+      queryClient.invalidateQueries({ queryKey: ["serviceRequest"] });
+      queryClient.invalidateQueries({ queryKey: ["notifications"] });
+      queryClient.invalidateQueries({ queryKey: ["analytics"] });
     },
-  })
+  });
 }
 
 // --- Lunch Token Hooks ---
@@ -180,10 +180,10 @@ export function useLunchTokens(date?: string) {
     queryFn: () => {
       const filtered = date
         ? lunchTokens.filter((t) => t.date === date)
-        : lunchTokens
-      return delay([...filtered])
+        : lunchTokens;
+      return delay([...filtered]);
     },
-  })
+  });
 }
 
 export function useLunchTokenForUser(userId: string, date: string) {
@@ -191,31 +191,31 @@ export function useLunchTokenForUser(userId: string, date: string) {
     queryKey: ["lunchToken", userId, date],
     queryFn: () => {
       const found = lunchTokens.find(
-        (t) => t.userId === userId && t.date === date
-      )
-      return delay(found || null)
+        (t) => t.userId === userId && t.date === date,
+      );
+      return delay(found || null);
     },
-  })
+  });
 }
 
 export function useCollectLunchToken() {
-  const queryClient = useQueryClient()
+  const queryClient = useQueryClient();
   return useMutation({
     mutationFn: ({
       userId,
       userName,
       preference,
     }: {
-      userId: string
-      userName: string
-      preference: MealPreference
+      userId: string;
+      userName: string;
+      preference: MealPreference;
     }) => {
-      const today = new Date().toISOString().split("T")[0]
+      const today = new Date().toISOString().split("T")[0];
       const existing = lunchTokens.find(
-        (t) => t.userId === userId && t.date === today
-      )
+        (t) => t.userId === userId && t.date === today,
+      );
       if (existing) {
-        throw new Error("Token already collected for today")
+        throw new Error("Token already collected for today");
       }
       const token: LunchToken = {
         id: `lt-${Date.now()}`,
@@ -224,15 +224,15 @@ export function useCollectLunchToken() {
         date: today,
         preference,
         collectedAt: new Date().toISOString(),
-      }
-      lunchTokens.unshift(token)
-      return delay(token)
+      };
+      lunchTokens.unshift(token);
+      return delay(token);
     },
     onSuccess: () => {
-      queryClient.invalidateQueries({ queryKey: ["lunchTokens"] })
-      queryClient.invalidateQueries({ queryKey: ["lunchToken"] })
+      queryClient.invalidateQueries({ queryKey: ["lunchTokens"] });
+      queryClient.invalidateQueries({ queryKey: ["lunchToken"] });
     },
-  })
+  });
 }
 
 // --- Notification Hooks ---
@@ -242,33 +242,33 @@ export function useNotifications(userId?: string) {
     queryKey: ["notifications", userId],
     queryFn: () => {
       const filtered = userId
-        ? notifications.filter((n) => n.userId === userId)
-        : notifications
-      return delay([...filtered])
+        ? notifications.filter((n) => n.userId === userId && !n.read)
+        : notifications.filter((n) => !n.read);
+      return delay([...filtered]);
     },
-  })
+  });
 }
 
 export function useMarkNotificationRead() {
-  const queryClient = useQueryClient()
+  const queryClient = useQueryClient();
   return useMutation({
     mutationFn: (notificationId: string) => {
-      const notif = notifications.find((n) => n.id === notificationId)
+      const notif = notifications.find((n) => n.id === notificationId);
       if (notif) {
-        notif.read = true
+        notif.read = true;
       }
-      return delay(notif)
+      return delay(notif);
     },
     onSuccess: () => {
-      queryClient.invalidateQueries({ queryKey: ["notifications"] })
+      queryClient.invalidateQueries({ queryKey: ["notifications"] });
     },
-  })
+  });
 }
 
 // --- Announcement Hooks ---
 
 export function useCreateAnnouncement() {
-  const queryClient = useQueryClient()
+  const queryClient = useQueryClient();
   return useMutation({
     mutationFn: ({
       title,
@@ -276,10 +276,10 @@ export function useCreateAnnouncement() {
       authorId,
       authorName,
     }: {
-      title: string
-      content: string
-      authorId: string
-      authorName: string
+      title: string;
+      content: string;
+      authorId: string;
+      authorName: string;
     }) => {
       const announcement = {
         id: `a${announcements.length + 1}`,
@@ -289,34 +289,34 @@ export function useCreateAnnouncement() {
         authorName,
         createdAt: new Date().toISOString(),
         pinned: false,
-      }
-      announcements.unshift(announcement)
-      return delay(announcement)
+      };
+      announcements.unshift(announcement);
+      return delay(announcement);
     },
     onSuccess: () => {
-      queryClient.invalidateQueries({ queryKey: ["announcements"] })
+      queryClient.invalidateQueries({ queryKey: ["announcements"] });
     },
-  })
+  });
 }
 
 export function usePinAnnouncement() {
-  const queryClient = useQueryClient()
+  const queryClient = useQueryClient();
   return useMutation({
     mutationFn: ({
       announcementId,
       pinned,
     }: {
-      announcementId: string
-      pinned: boolean
+      announcementId: string;
+      pinned: boolean;
     }) => {
-      const announcement = announcements.find((a) => a.id === announcementId)
+      const announcement = announcements.find((a) => a.id === announcementId);
       if (announcement) {
-        announcement.pinned = pinned
+        announcement.pinned = pinned;
       }
-      return delay(announcement)
+      return delay(announcement);
     },
     onSuccess: () => {
-      queryClient.invalidateQueries({ queryKey: ["announcements"] })
+      queryClient.invalidateQueries({ queryKey: ["announcements"] });
     },
-  })
+  });
 }
