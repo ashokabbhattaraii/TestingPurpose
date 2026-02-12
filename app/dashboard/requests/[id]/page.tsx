@@ -247,6 +247,7 @@ export default function RequestDetailPage() {
                     </SelectTrigger>
                     <SelectContent>
                       <SelectItem value="in-progress">In Progress</SelectItem>
+                      <SelectItem value="on-hold">On Hold</SelectItem>
                       <SelectItem value="resolved">Resolved</SelectItem>
                       <SelectItem value="rejected">Rejected</SelectItem>
                     </SelectContent>

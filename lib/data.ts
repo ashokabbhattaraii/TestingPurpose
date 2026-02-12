@@ -226,7 +226,7 @@ export const serviceRequests: ServiceRequest[] = [
     description:
       "Noticed insects in the office kitchen near the storage cabinets.",
     category: "Cleaning",
-    status: "pending",
+    status: "on-hold",
     priority: "high",
     createdBy: "u1",
     createdByName: "Aarav Sharma",
@@ -381,6 +381,7 @@ export const notifications: Notification[] = [
 export const analyticsData: AnalyticsData = {
   totalRequests: 10,
   pendingRequests: 3,
+  onHoldRequests: 2,
   inProgressRequests: 3,
   resolvedRequests: 3,
   avgResolutionTimeHours: 38,
@@ -400,6 +401,7 @@ export const analyticsData: AnalyticsData = {
   requestsByStatus: [
     { status: "Pending", count: 3 },
     { status: "In Progress", count: 3 },
+    { status: "On Hold", count: 2 },
     { status: "Resolved", count: 3 },
     { status: "Rejected", count: 1 },
   ],
