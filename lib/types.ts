@@ -1,6 +1,11 @@
 export type UserRole = "employee" | "admin" | "superadmin";
 
-export type RequestStatus = "pending" | "in-progress" | "resolved" | "rejected";
+export type RequestStatus =
+  | "pending"
+  | "on-hold"
+  | "in-progress"
+  | "resolved"
+  | "rejected";
 
 export type RequestCategory =
   | "Food and Supplies"
@@ -9,7 +14,6 @@ export type RequestCategory =
   | "Other";
 
 export type SocialProvider = "google" | "github" | "linkedin";
-
 export interface SocialAccount {
   provider: SocialProvider;
   email: string;
@@ -49,7 +53,6 @@ export interface ServiceRequest {
   createdAt: string;
   updatedAt: string;
 }
-
 export interface Announcement {
   id: string;
   title: string;
@@ -84,7 +87,9 @@ export interface Notification {
 export interface AnalyticsData {
   totalRequests: number;
   pendingRequests: number;
+  onHoldRequests: number;
   inProgressRequests: number;
+
   resolvedRequests: number;
   avgResolutionTimeHours: number;
   requestsByCategory: { category: string; count: number }[];

@@ -23,6 +23,7 @@ import { useEffect } from "react";
 const PIE_COLORS = [
   "hsl(217, 91%, 50%)",
   "hsl(142, 71%, 45%)",
+  "hsl(10, 100%, 67%)",
   "hsl(38, 92%, 50%)",
   "hsl(0, 84%, 60%)",
 ];
