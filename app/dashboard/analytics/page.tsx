@@ -1,10 +1,35 @@
 "use client";
 
 import { useAuth } from "@/lib/auth-context";
-import { useAnalytics } from "@/lib/queries";
+import { useAnalytics, useServiceRequests } from "@/lib/queries";
 import { Card, CardContent, CardHeader, CardTitle } from "@/components/ui/card";
 import { Skeleton } from "@/components/ui/skeleton";
-import { ClipboardList, Clock, CheckCircle2, AlertCircle } from "lucide-react";
+import { Button } from "@/components/ui/button";
+import { Badge } from "@/components/ui/badge";
+import {
+  Select,
+  SelectContent,
+  SelectItem,
+  SelectTrigger,
+  SelectValue,
+} from "@/components/ui/select";
+import {
+  Dialog,
+  DialogContent,
+  DialogHeader,
+  DialogTitle,
+} from "@/components/ui/dialog";
+import {
+  ClipboardList,
+  Clock,
+  CheckCircle2,
+  AlertCircle,
+  CalendarDays,
+  Filter,
+  X,
+  TrendingUp,
+  ArrowUpRight,
+} from "lucide-react";
 import {
   BarChart,
   Bar,
@@ -18,20 +43,129 @@ import {
   Legend,
 } from "recharts";
 import { useRouter } from "next/navigation";
-import { useEffect } from "react";
+import { useEffect, useState, useMemo } from "react";
+import { format, subDays, subMonths, isAfter, parseISO } from "date-fns";
+import type { ServiceRequest, RequestStatus } from "@/lib/types";
 
 const PIE_COLORS = [
   "hsl(217, 91%, 50%)",
   "hsl(142, 71%, 45%)",
-  "hsl(10, 100%, 67%)",
   "hsl(38, 92%, 50%)",
+  "hsl(10, 100%, 67%)",
   "hsl(0, 84%, 60%)",
 ];
+
+const STATUS_COLORS: Record<string, string> = {
+  pending: "bg-amber-100 text-amber-700",
+  "in-progress": "bg-blue-100 text-blue-700",
+  "on-hold": "bg-orange-100 text-orange-700",
+  resolved: "bg-emerald-100 text-emerald-700",
+  rejected: "bg-red-100 text-red-700",
+};
+
+type TimePeriod = "7d" | "30d" | "3m" | "6m" | "1y" | "all";
+type DrillDownType = "month" | "category" | "status" | null;
+
+interface DrillDownState {
+  type: DrillDownType;
+  label: string;
+  filterValue: string;
+}
+
+function getTimePeriodLabel(period: TimePeriod) {
+  switch (period) {
+    case "7d": return "Last 7 days";
+    case "30d": return "Last 30 days";
+    case "3m": return "Last 3 months";
+    case "6m": return "Last 6 months";
+    case "1y": return "Last year";
+    case "all": return "All time";
+  }
+}
+
+function filterByTimePeriod(requests: ServiceRequest[], period: TimePeriod): ServiceRequest[] {
+  if (period === "all") return requests;
+  const now = new Date();
+  let cutoff: Date;
+  switch (period) {
+    case "7d": cutoff = subDays(now, 7); break;
+    case "30d": cutoff = subDays(now, 30); break;
+    case "3m": cutoff = subMonths(now, 3); break;
+    case "6m": cutoff = subMonths(now, 6); break;
+    case "1y": cutoff = subMonths(now, 12); break;
+  }
+  return requests.filter((r) => isAfter(parseISO(r.createdAt), cutoff));
+}
+
+function computeAnalytics(requests: ServiceRequest[]) {
+  const totalRequests = requests.length;
+  const pendingRequests = requests.filter((r) => r.status === "pending").length;
+  const inProgressRequests = requests.filter((r) => r.status === "in-progress").length;
+  const onHoldRequests = requests.filter((r) => r.status === "on-hold").length;
+  const resolvedRequests = requests.filter((r) => r.status === "resolved").length;
+
+  const resolved = requests.filter((r) => r.status === "resolved");
+  let avgResolutionTimeHours = 0;
+  if (resolved.length > 0) {
+    const totalMs = resolved.reduce((acc, r) => {
+      return acc + (new Date(r.updatedAt).getTime() - new Date(r.createdAt).getTime());
+    }, 0);
+    avgResolutionTimeHours = Math.round(totalMs / resolved.length / (1000 * 60 * 60));
+  }
+
+  const categoryMap = new Map<string, number>();
+  requests.forEach((r) => {
+    categoryMap.set(r.category, (categoryMap.get(r.category) ?? 0) + 1);
+  });
+  const requestsByCategory = Array.from(categoryMap, ([category, count]) => ({ category, count }));
+
+  const monthMap = new Map<string, number>();
+  requests.forEach((r) => {
+    const m = format(parseISO(r.createdAt), "MMM yyyy");
+    monthMap.set(m, (monthMap.get(m) ?? 0) + 1);
+  });
+  const requestsByMonth = Array.from(monthMap, ([month, count]) => ({ month, count }));
+
+  const statusMap = new Map<string, number>();
+  requests.forEach((r) => {
+    const label = r.status.charAt(0).toUpperCase() + r.status.slice(1).replace("-", " ");
+    statusMap.set(label, (statusMap.get(label) ?? 0) + 1);
+  });
+  const requestsByStatus = Array.from(statusMap, ([status, count]) => ({ status, count }));
+
+  return {
+    totalRequests,
+    pendingRequests,
+    inProgressRequests,
+    onHoldRequests,
+    resolvedRequests,
+    avgResolutionTimeHours,
+    requestsByCategory,
+    requestsByMonth,
+    requestsByStatus,
+  };
+}
+
+function StatusBadge({ status }: { status: RequestStatus }) {
+  return (
+    <span className={`inline-flex items-center rounded-full px-2 py-0.5 text-[10px] font-semibold capitalize ${STATUS_COLORS[status] ?? "bg-muted text-muted-foreground"}`}>
+      {status.replace("-", " ")}
+    </span>
+  );
+}
 
 export default function AnalyticsPage() {
   const { user } = useAuth();
   const router = useRouter();
-  const { data: analytics, isLoading } = useAnalytics();
+  const { data: allRequests, isLoading: reqLoading } = useServiceRequests();
+  const { isLoading: analyticsLoading } = useAnalytics();
+
+  const [timePeriod, setTimePeriod] = useState<TimePeriod>("all");
+  const [categoryFilter, setCategoryFilter] = useState<string>("all");
+  const [statusFilter, setStatusFilter] = useState<string>("all");
+  const [drillDown, setDrillDown] = useState<DrillDownState | null>(null);
+
+  const isLoading = reqLoading || analyticsLoading;
 
   useEffect(() => {
     if (user && user.role === "employee") {
@@ -39,21 +173,139 @@ export default function AnalyticsPage() {
     }
   }, [user, router]);
 
+  // Compute filtered analytics from raw requests
+  const filteredRequests = useMemo(() => {
+    if (!allRequests) return [];
+    let filtered = filterByTimePeriod(allRequests, timePeriod);
+    if (categoryFilter !== "all") {
+      filtered = filtered.filter((r) => r.category === categoryFilter);
+    }
+    if (statusFilter !== "all") {
+      filtered = filtered.filter((r) => r.status === statusFilter);
+    }
+    return filtered;
+  }, [allRequests, timePeriod, categoryFilter, statusFilter]);
+
+  const analytics = useMemo(() => computeAnalytics(filteredRequests), [filteredRequests]);
+
+  // Drill-down: get filtered requests for a clicked chart segment
+  const drillDownRequests = useMemo(() => {
+    if (!drillDown || !allRequests) return [];
+    let base = filterByTimePeriod(allRequests, timePeriod);
+    if (categoryFilter !== "all") base = base.filter((r) => r.category === categoryFilter);
+    if (statusFilter !== "all") base = base.filter((r) => r.status === statusFilter);
+
+    switch (drillDown.type) {
+      case "month":
+        return base.filter((r) => format(parseISO(r.createdAt), "MMM yyyy") === drillDown.filterValue);
+      case "category":
+        return base.filter((r) => r.category === drillDown.filterValue);
+      case "status":
+        return base.filter(
+          (r) => r.status.charAt(0).toUpperCase() + r.status.slice(1).replace("-", " ") === drillDown.filterValue
+        );
+      default:
+        return [];
+    }
+  }, [drillDown, allRequests, timePeriod, categoryFilter, statusFilter]);
+
+  const activeFilterCount = [
+    timePeriod !== "all" ? 1 : 0,
+    categoryFilter !== "all" ? 1 : 0,
+    statusFilter !== "all" ? 1 : 0,
+  ].reduce((a, b) => a + b, 0);
+
+  const clearFilters = () => {
+    setTimePeriod("all");
+    setCategoryFilter("all");
+    setStatusFilter("all");
+  };
+
   if (user?.role === "employee") return null;
 
   return (
     <div className="flex flex-col gap-6">
-      <div>
-        <h1 className="text-xl font-semibold text-foreground">Analytics</h1>
-        <p className="text-sm text-muted-foreground">
-          Resolution metrics and request distribution.
-        </p>
+      {/* Header */}
+      <div className="flex flex-col gap-4 sm:flex-row sm:items-center sm:justify-between">
+        <div>
+          <h1 className="text-xl font-semibold text-foreground">Analytics</h1>
+          <p className="text-sm text-muted-foreground">
+            Resolution metrics and request distribution.
+          </p>
+        </div>
       </div>
 
+      {/* Filters */}
+      <Card>
+        <CardContent className="p-4">
+          <div className="flex flex-col gap-3 sm:flex-row sm:items-center sm:justify-between">
+            <div className="flex items-center gap-2 text-sm font-medium text-muted-foreground">
+              <Filter className="h-4 w-4" />
+              <span>Filters</span>
+              {activeFilterCount > 0 && (
+                <Badge variant="secondary" className="text-xs">
+                  {activeFilterCount} active
+                </Badge>
+              )}
+            </div>
+            <div className="flex flex-wrap items-center gap-2">
+              <Select value={timePeriod} onValueChange={(v) => setTimePeriod(v as TimePeriod)}>
+                <SelectTrigger className="h-9 w-[150px] text-xs">
+                  <CalendarDays className="mr-1.5 h-3.5 w-3.5 text-muted-foreground" />
+                  <SelectValue />
+                </SelectTrigger>
+                <SelectContent>
+                  <SelectItem value="7d">Last 7 days</SelectItem>
+                  <SelectItem value="30d">Last 30 days</SelectItem>
+                  <SelectItem value="3m">Last 3 months</SelectItem>
+                  <SelectItem value="6m">Last 6 months</SelectItem>
+                  <SelectItem value="1y">Last year</SelectItem>
+                  <SelectItem value="all">All time</SelectItem>
+                </SelectContent>
+              </Select>
+
+              <Select value={categoryFilter} onValueChange={setCategoryFilter}>
+                <SelectTrigger className="h-9 w-[160px] text-xs">
+                  <SelectValue placeholder="Category" />
+                </SelectTrigger>
+                <SelectContent>
+                  <SelectItem value="all">All Categories</SelectItem>
+                  <SelectItem value="Food and Supplies">Food and Supplies</SelectItem>
+                  <SelectItem value="Office Maintenance">Office Maintenance</SelectItem>
+                  <SelectItem value="Cleaning">Cleaning</SelectItem>
+                  <SelectItem value="Other">Other</SelectItem>
+                </SelectContent>
+              </Select>
+
+              <Select value={statusFilter} onValueChange={setStatusFilter}>
+                <SelectTrigger className="h-9 w-[140px] text-xs">
+                  <SelectValue placeholder="Status" />
+                </SelectTrigger>
+                <SelectContent>
+                  <SelectItem value="all">All Statuses</SelectItem>
+                  <SelectItem value="pending">Pending</SelectItem>
+                  <SelectItem value="in-progress">In Progress</SelectItem>
+                  <SelectItem value="on-hold">On Hold</SelectItem>
+                  <SelectItem value="resolved">Resolved</SelectItem>
+                  <SelectItem value="rejected">Rejected</SelectItem>
+                </SelectContent>
+              </Select>
+
+              {activeFilterCount > 0 && (
+                <Button variant="ghost" size="sm" onClick={clearFilters} className="h-9 text-xs gap-1">
+                  <X className="h-3.5 w-3.5" />
+                  Clear
+                </Button>
+              )}
+            </div>
+          </div>
+        </CardContent>
+      </Card>
+
       {/* Summary Cards */}
-      <div className="grid grid-cols-2 gap-3 lg:grid-cols-4">
+      <div className="grid grid-cols-2 gap-3 lg:grid-cols-5">
         {isLoading ? (
-          Array.from({ length: 4 }).map((_, i) => (
+          Array.from({ length: 5 }).map((_, i) => (
             <Card key={i}>
               <CardContent className="p-4">
                 <Skeleton className="h-16" />
@@ -69,7 +321,7 @@ export default function AnalyticsPage() {
                 </div>
                 <div>
                   <p className="text-2xl font-bold text-foreground">
-                    {analytics?.totalRequests}
+                    {analytics.totalRequests}
                   </p>
                   <p className="text-xs text-muted-foreground">Total</p>
                 </div>
@@ -82,9 +334,22 @@ export default function AnalyticsPage() {
                 </div>
                 <div>
                   <p className="text-2xl font-bold text-foreground">
-                    {analytics?.pendingRequests}
+                    {analytics.pendingRequests}
                   </p>
                   <p className="text-xs text-muted-foreground">Pending</p>
+                </div>
+              </CardContent>
+            </Card>
+            <Card>
+              <CardContent className="flex items-center gap-3 p-4">
+                <div className="flex h-10 w-10 items-center justify-center rounded-lg bg-blue-50">
+                  <TrendingUp className="h-5 w-5 text-blue-600" />
+                </div>
+                <div>
+                  <p className="text-2xl font-bold text-foreground">
+                    {analytics.inProgressRequests}
+                  </p>
+                  <p className="text-xs text-muted-foreground">In Progress</p>
                 </div>
               </CardContent>
             </Card>
@@ -95,7 +360,7 @@ export default function AnalyticsPage() {
                 </div>
                 <div>
                   <p className="text-2xl font-bold text-foreground">
-                    {analytics?.resolvedRequests}
+                    {analytics.resolvedRequests}
                   </p>
                   <p className="text-xs text-muted-foreground">Resolved</p>
                 </div>
@@ -108,7 +373,7 @@ export default function AnalyticsPage() {
                 </div>
                 <div>
                   <p className="text-2xl font-bold text-foreground">
-                    {analytics?.avgResolutionTimeHours}h
+                    {analytics.avgResolutionTimeHours}h
                   </p>
                   <p className="text-xs text-muted-foreground">Avg Resolve</p>
                 </div>
@@ -120,61 +385,74 @@ export default function AnalyticsPage() {
 
       {/* Charts */}
       <div className="grid gap-6 lg:grid-cols-2">
-        <Card>
-          <CardHeader className="pb-3">
+        {/* Requests by Month - Clickable */}
+        <Card className="group">
+          <CardHeader className="flex flex-row items-center justify-between pb-3">
             <CardTitle className="text-sm font-medium text-foreground">
               Requests by Month
             </CardTitle>
+            <span className="text-[10px] text-muted-foreground">Click a bar for details</span>
           </CardHeader>
           <CardContent>
             {isLoading ? (
               <Skeleton className="h-60" />
+            ) : analytics.requestsByMonth.length === 0 ? (
+              <div className="flex h-60 items-center justify-center text-sm text-muted-foreground">
+                No data for this period
+              </div>
             ) : (
               <ResponsiveContainer width="100%" height={250}>
-                <BarChart data={analytics?.requestsByMonth ?? []}>
-                  <XAxis
-                    dataKey="month"
-                    tick={{ fontSize: 12 }}
-                    axisLine={false}
-                    tickLine={false}
-                  />
-                  <YAxis
-                    tick={{ fontSize: 12 }}
-                    axisLine={false}
-                    tickLine={false}
-                  />
+                <BarChart
+                  data={analytics.requestsByMonth}
+                  className="cursor-pointer"
+                  onClick={(state) => {
+                    if (state?.activePayload?.[0]) {
+                      const payload = state.activePayload[0].payload;
+                      setDrillDown({
+                        type: "month",
+                        label: `Requests in ${payload.month}`,
+                        filterValue: payload.month,
+                      });
+                    }
+                  }}
+                >
+                  <XAxis dataKey="month" tick={{ fontSize: 11 }} axisLine={false} tickLine={false} />
+                  <YAxis tick={{ fontSize: 11 }} axisLine={false} tickLine={false} allowDecimals={false} />
                   <Tooltip
                     contentStyle={{
                       borderRadius: "8px",
                       border: "1px solid hsl(214, 20%, 90%)",
                       fontSize: "12px",
                     }}
+                    cursor={{ fill: "hsl(214, 20%, 95%)" }}
                   />
-                  <Bar
-                    dataKey="count"
-                    fill="hsl(217, 91%, 50%)"
-                    radius={[4, 4, 0, 0]}
-                  />
+                  <Bar dataKey="count" fill="hsl(217, 91%, 50%)" radius={[4, 4, 0, 0]} />
                 </BarChart>
               </ResponsiveContainer>
             )}
           </CardContent>
         </Card>
 
+        {/* Requests by Category - Clickable Pie */}
         <Card>
-          <CardHeader className="pb-3">
+          <CardHeader className="flex flex-row items-center justify-between pb-3">
             <CardTitle className="text-sm font-medium text-foreground">
               Requests by Category
             </CardTitle>
+            <span className="text-[10px] text-muted-foreground">Click a slice for details</span>
           </CardHeader>
           <CardContent>
             {isLoading ? (
               <Skeleton className="h-60" />
+            ) : analytics.requestsByCategory.length === 0 ? (
+              <div className="flex h-60 items-center justify-center text-sm text-muted-foreground">
+                No data for this period
+              </div>
             ) : (
               <ResponsiveContainer width="100%" height={250}>
                 <PieChart>
                   <Pie
-                    data={analytics?.requestsByCategory ?? []}
+                    data={analytics.requestsByCategory}
                     cx="50%"
                     cy="50%"
                     innerRadius={55}
@@ -182,12 +460,19 @@ export default function AnalyticsPage() {
                     paddingAngle={4}
                     dataKey="count"
                     nameKey="category"
+                    className="cursor-pointer"
+                    onClick={(data) => {
+                      if (data?.category) {
+                        setDrillDown({
+                          type: "category",
+                          label: `${data.category} Requests`,
+                          filterValue: data.category,
+                        });
+                      }
+                    }}
                   >
-                    {analytics?.requestsByCategory.map((_, index) => (
-                      <Cell
-                        key={`cell-${index}`}
-                        fill={PIE_COLORS[index % PIE_COLORS.length]}
-                      />
+                    {analytics.requestsByCategory.map((_, index) => (
+                      <Cell key={`cell-${index}`} fill={PIE_COLORS[index % PIE_COLORS.length]} />
                     ))}
                   </Pie>
                   <Tooltip
@@ -204,48 +489,51 @@ export default function AnalyticsPage() {
           </CardContent>
         </Card>
 
+        {/* Requests by Status - Clickable */}
         <Card className="lg:col-span-2">
-          <CardHeader className="pb-3">
+          <CardHeader className="flex flex-row items-center justify-between pb-3">
             <CardTitle className="text-sm font-medium text-foreground">
               Requests by Status
             </CardTitle>
+            <span className="text-[10px] text-muted-foreground">Click a bar for details</span>
           </CardHeader>
           <CardContent>
             {isLoading ? (
               <Skeleton className="h-60" />
+            ) : analytics.requestsByStatus.length === 0 ? (
+              <div className="flex h-60 items-center justify-center text-sm text-muted-foreground">
+                No data for this period
+              </div>
             ) : (
               <ResponsiveContainer width="100%" height={250}>
                 <BarChart
-                  data={analytics?.requestsByStatus ?? []}
+                  data={analytics.requestsByStatus}
                   layout="vertical"
+                  className="cursor-pointer"
+                  onClick={(state) => {
+                    if (state?.activePayload?.[0]) {
+                      const payload = state.activePayload[0].payload;
+                      setDrillDown({
+                        type: "status",
+                        label: `${payload.status} Requests`,
+                        filterValue: payload.status,
+                      });
+                    }
+                  }}
                 >
-                  <XAxis
-                    type="number"
-                    tick={{ fontSize: 12 }}
-                    axisLine={false}
-                    tickLine={false}
-                  />
-                  <YAxis
-                    type="category"
-                    dataKey="status"
-                    tick={{ fontSize: 12 }}
-                    axisLine={false}
-                    tickLine={false}
-                    width={80}
-                  />
+                  <XAxis type="number" tick={{ fontSize: 11 }} axisLine={false} tickLine={false} allowDecimals={false} />
+                  <YAxis type="category" dataKey="status" tick={{ fontSize: 11 }} axisLine={false} tickLine={false} width={85} />
                   <Tooltip
                     contentStyle={{
                       borderRadius: "8px",
                       border: "1px solid hsl(214, 20%, 90%)",
                       fontSize: "12px",
                     }}
+                    cursor={{ fill: "hsl(214, 20%, 95%)" }}
                   />
                   <Bar dataKey="count" radius={[0, 4, 4, 0]}>
-                    {analytics?.requestsByStatus.map((entry, index) => (
-                      <Cell
-                        key={`cell-${index}`}
-                        fill={PIE_COLORS[index % PIE_COLORS.length]}
-                      />
+                    {analytics.requestsByStatus.map((_, index) => (
+                      <Cell key={`cell-${index}`} fill={PIE_COLORS[index % PIE_COLORS.length]} />
                     ))}
                   </Bar>
                 </BarChart>
@@ -254,6 +542,56 @@ export default function AnalyticsPage() {
           </CardContent>
         </Card>
       </div>
+
+      {/* Drill-Down Dialog */}
+      <Dialog open={drillDown !== null} onOpenChange={(open) => { if (!open) setDrillDown(null); }}>
+        <DialogContent className="max-w-2xl max-h-[80vh] overflow-hidden flex flex-col">
+          <DialogHeader>
+            <DialogTitle className="flex items-center gap-2 text-base">
+              <ArrowUpRight className="h-4 w-4 text-primary" />
+              {drillDown?.label}
+              <Badge variant="secondary" className="ml-1 text-xs">
+                {drillDownRequests.length} request{drillDownRequests.length !== 1 ? "s" : ""}
+              </Badge>
+            </DialogTitle>
+          </DialogHeader>
+          <div className="flex-1 overflow-y-auto -mx-6 px-6">
+            {drillDownRequests.length === 0 ? (
+              <div className="py-8 text-center text-sm text-muted-foreground">
+                No requests found.
+              </div>
+            ) : (
+              <div className="flex flex-col gap-2 pb-4">
+                {drillDownRequests.map((req) => (
+                  <button
+                    key={req.id}
+                    onClick={() => {
+                      setDrillDown(null);
+                      router.push(`/dashboard/requests/${req.id}`);
+                    }}
+                    className="flex flex-col gap-1.5 rounded-lg border p-3 text-left transition-colors hover:bg-muted/50 sm:flex-row sm:items-center sm:justify-between"
+                  >
+                    <div className="flex flex-col gap-0.5">
+                      <div className="flex items-center gap-2">
+                        <span className="text-xs font-mono text-muted-foreground">{req.id}</span>
+                        <span className="text-[10px] capitalize text-muted-foreground">{req.category}</span>
+                      </div>
+                      <span className="text-sm font-medium text-foreground">{req.title}</span>
+                      <span className="text-xs text-muted-foreground">by {req.createdByName}</span>
+                    </div>
+                    <div className="flex items-center gap-3">
+                      <span className="text-xs text-muted-foreground">
+                        {format(parseISO(req.createdAt), "MMM d, yyyy")}
+                      </span>
+                      <StatusBadge status={req.status} />
+                    </div>
+                  </button>
+                ))}
+              </div>
+            )}
+          </div>
+        </DialogContent>
+      </Dialog>
     </div>
   );
 }
