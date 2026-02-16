@@ -1,24 +1,24 @@
-"use client"
+"use client";
 
-import { useAuth } from "@/lib/auth-context"
-import { useNotifications, useMarkNotificationRead } from "@/lib/queries"
-import { Card, CardContent, CardHeader, CardTitle } from "@/components/ui/card"
-import { Button } from "@/components/ui/button"
-import { Skeleton } from "@/components/ui/skeleton"
-import { Bell, BellOff, ExternalLink } from "lucide-react"
-import { format } from "date-fns"
-import Link from "next/link"
+import { useAuth } from "@/lib/auth-context";
+import { useNotifications, useMarkNotificationRead } from "@/lib/queries";
+import { Card, CardContent, CardHeader, CardTitle } from "@/components/ui/card";
+import { Button } from "@/components/ui/button";
+import { Skeleton } from "@/components/ui/skeleton";
+import { Bell, BellOff, ExternalLink } from "lucide-react";
+import { format } from "date-fns";
+import Link from "next/link";
 
 export default function NotificationsPage() {
-  const { user } = useAuth()
-  const { data: notifications, isLoading } = useNotifications(user?.id)
-  const markRead = useMarkNotificationRead()
+  const { user } = useAuth();
+  const { data: notifications, isLoading } = useNotifications(user?.id);
+  const markRead = useMarkNotificationRead();
 
-  const unreadCount = notifications?.filter((n) => !n.read).length || 0
+  const unreadCount = notifications?.filter((n) => !n.read).length || 0;
 
   const handleMarkRead = (id: string) => {
-    markRead.mutate(id)
-  }
+    markRead.mutate(id);
+  };
 
   return (
     <div className="mx-auto max-w-2xl flex flex-col gap-6">
@@ -70,9 +70,7 @@ export default function NotificationsPage() {
                 >
                   <Bell
                     className={`h-4 w-4 ${
-                      notif.read
-                        ? "text-muted-foreground"
-                        : "text-primary"
+                      notif.read ? "text-muted-foreground" : "text-primary"
                     }`}
                   />
                 </div>
@@ -125,5 +123,5 @@ export default function NotificationsPage() {
         </div>
       )}
     </div>
-  )
+  );
 }

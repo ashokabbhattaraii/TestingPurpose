@@ -226,7 +226,7 @@ export const serviceRequests: ServiceRequest[] = [
     description:
       "Noticed insects in the office kitchen near the storage cabinets.",
     category: "Cleaning",
-    status: "pending",
+    status: "on-hold",
     priority: "high",
     createdBy: "u1",
     createdByName: "Aarav Sharma",
@@ -369,6 +369,64 @@ export const notifications: Notification[] = [
   },
   {
     id: "n2",
+    userId: "u3",
+    title: "New Assignment",
+    message:
+      "You have been assigned to request SR-002: AC not working in meeting room B",
+    read: false,
+    createdAt: "2026-02-08T10:00:00Z",
+    link: "/dashboard/requests/SR-002",
+  },
+  {
+    id: "n3",
+    userId: "u3",
+    title: "New Assignment",
+    message:
+      "You have been assigned to request SR-002: AC not working in meeting room B",
+    read: false,
+    createdAt: "2026-02-08T10:00:00Z",
+    link: "/dashboard/requests/SR-002",
+  },
+  {
+    id: "n4",
+    userId: "u3",
+    title: "New Assignment",
+    message:
+      "You have been assigned to request SR-002: AC not working in meeting room B",
+    read: false,
+    createdAt: "2026-02-08T10:00:00Z",
+    link: "/dashboard/requests/SR-002",
+  },
+  {
+    id: "n5",
+    userId: "u3",
+    title: "New Assignment",
+    message:
+      "You have been assigned to request SR-002: AC not working in meeting room B",
+    read: false,
+    createdAt: "2026-02-08T10:00:00Z",
+    link: "/dashboard/requests/SR-002",
+  },
+  {
+    id: "n6",
+    userId: "u4",
+    title: "New Assignment",
+    message: "You have been assigned to request SR-006: Restock printer paper",
+    read: true,
+    createdAt: "2026-02-06T09:00:00Z",
+    link: "/dashboard/requests/SR-006",
+  },
+  {
+    id: "n7",
+    userId: "u4",
+    title: "New Assignment",
+    message: "You have been assigned to request SR-006: Restock printer paper",
+    read: true,
+    createdAt: "2026-02-06T09:00:00Z",
+    link: "/dashboard/requests/SR-006",
+  },
+  {
+    id: "n8",
     userId: "u4",
     title: "New Assignment",
     message: "You have been assigned to request SR-006: Restock printer paper",
@@ -381,6 +439,7 @@ export const notifications: Notification[] = [
 export const analyticsData: AnalyticsData = {
   totalRequests: 10,
   pendingRequests: 3,
+  onHoldRequests: 2,
   inProgressRequests: 3,
   resolvedRequests: 3,
   avgResolutionTimeHours: 38,
@@ -400,6 +459,7 @@ export const analyticsData: AnalyticsData = {
   requestsByStatus: [
     { status: "Pending", count: 3 },
     { status: "In Progress", count: 3 },
+    { status: "On Hold", count: 2 },
     { status: "Resolved", count: 3 },
     { status: "Rejected", count: 1 },
   ],
