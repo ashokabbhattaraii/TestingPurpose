@@ -6,9 +6,11 @@ import { Card, CardContent } from "@/components/ui/card"
 import { Badge } from "@/components/ui/badge"
 import { Skeleton } from "@/components/ui/skeleton"
 import { Button } from "@/components/ui/button"
-import { Megaphone, Pin, X } from "lucide-react"
+import { Megaphone, Pin, X, ChevronLeft, ChevronRight } from "lucide-react"
 import { format } from "date-fns"
 import { useState } from "react"
+
+const ITEMS_PER_PAGE = 5;
 import {
   Dialog,
   DialogContent,
@@ -29,8 +31,16 @@ export default function AnnouncementsPage() {
   const [open, setOpen] = useState(false)
   const [title, setTitle] = useState("")
   const [content, setContent] = useState("")
+  const [currentPage, setCurrentPage] = useState(1)
 
   const canCreate = user?.role === "admin" || user?.role === "superadmin"
+
+  const totalAnnouncements = announcements?.length ?? 0
+  const totalPages = Math.ceil(totalAnnouncements / ITEMS_PER_PAGE)
+  const paginatedAnnouncements = announcements?.slice(
+    (currentPage - 1) * ITEMS_PER_PAGE,
+    currentPage * ITEMS_PER_PAGE
+  ) ?? []
 
   const handleCreateAnnouncement = () => {
     if (title.trim() && content.trim() && user) {
@@ -145,7 +155,7 @@ export default function AnnouncementsPage() {
         </Card>
       ) : (
         <div className="flex flex-col gap-3">
-          {announcements.map((ann) => (
+          {paginatedAnnouncements.map((ann) => (
             <Card
               key={ann.id}
               className={ann.pinned ? "border-primary/30 bg-primary/[0.02]" : ""}
@@ -200,6 +210,48 @@ export default function AnnouncementsPage() {
             </Card>
           ))}
         </div>
+
+        {/* Pagination */}
+        {totalPages > 1 && (
+          <div className="flex items-center justify-between pt-2">
+            <p className="text-sm text-muted-foreground">
+              Showing {(currentPage - 1) * ITEMS_PER_PAGE + 1}-{Math.min(currentPage * ITEMS_PER_PAGE, totalAnnouncements)} of {totalAnnouncements}
+            </p>
+            <div className="flex items-center gap-2">
+              <Button
+                variant="outline"
+                size="sm"
+                onClick={() => setCurrentPage((p) => Math.max(1, p - 1))}
+                disabled={currentPage === 1}
+              >
+                <ChevronLeft className="h-4 w-4 mr-1" />
+                Previous
+              </Button>
+              <div className="flex items-center gap-1">
+                {Array.from({ length: totalPages }, (_, i) => i + 1).map((page) => (
+                  <Button
+                    key={page}
+                    variant={currentPage === page ? "default" : "outline"}
+                    size="sm"
+                    className="h-8 w-8 p-0"
+                    onClick={() => setCurrentPage(page)}
+                  >
+                    {page}
+                  </Button>
+                ))}
+              </div>
+              <Button
+                variant="outline"
+                size="sm"
+                onClick={() => setCurrentPage((p) => Math.min(totalPages, p + 1))}
+                disabled={currentPage === totalPages}
+              >
+                Next
+                <ChevronRight className="h-4 w-4 ml-1" />
+              </Button>
+            </div>
+          </div>
+        )}
       )}
     </div>
   )

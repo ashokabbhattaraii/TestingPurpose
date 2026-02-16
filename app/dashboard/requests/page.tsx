@@ -14,11 +14,13 @@ import {
   SelectTrigger,
   SelectValue,
 } from "@/components/ui/select";
-import { Plus, Search } from "lucide-react";
+import { Plus, Search, ChevronLeft, ChevronRight } from "lucide-react";
 import Link from "next/link";
 import { format } from "date-fns";
 import { useState } from "react";
 import type { RequestStatus, RequestCategory } from "@/lib/types";
+
+const ITEMS_PER_PAGE = 6;
 
 export default function RequestsPage() {
   const { user } = useAuth();
@@ -29,6 +31,7 @@ export default function RequestsPage() {
   const [search, setSearch] = useState("");
   const [statusFilter, setStatusFilter] = useState<string>("all");
   const [categoryFilter, setCategoryFilter] = useState<string>("all");
+  const [currentPage, setCurrentPage] = useState(1);
 
   const filtered =
     requests?.filter((req) => {
@@ -40,6 +43,26 @@ export default function RequestsPage() {
         categoryFilter === "all" || req.category === categoryFilter;
       return matchSearch && matchStatus && matchCategory;
     }) ?? [];
+
+  const totalPages = Math.ceil(filtered.length / ITEMS_PER_PAGE);
+  const paginatedRequests = filtered.slice(
+    (currentPage - 1) * ITEMS_PER_PAGE,
+    currentPage * ITEMS_PER_PAGE
+  );
+
+  // Reset page when filters change
+  const handleSearch = (value: string) => {
+    setSearch(value);
+    setCurrentPage(1);
+  };
+  const handleStatusFilter = (value: string) => {
+    setStatusFilter(value);
+    setCurrentPage(1);
+  };
+  const handleCategoryFilter = (value: string) => {
+    setCategoryFilter(value);
+    setCurrentPage(1);
+  };
 
   return (
     <div className="flex flex-col gap-6">
@@ -71,11 +94,11 @@ export default function RequestsPage() {
           <Input
             placeholder="Search by title or ID..."
             value={search}
-            onChange={(e) => setSearch(e.target.value)}
+            onChange={(e) => handleSearch(e.target.value)}
             className="pl-9"
           />
         </div>
-        <Select value={statusFilter} onValueChange={setStatusFilter}>
+        <Select value={statusFilter} onValueChange={handleStatusFilter}>
           <SelectTrigger className="w-full sm:w-40">
             <SelectValue placeholder="Status" />
           </SelectTrigger>
@@ -87,7 +110,7 @@ export default function RequestsPage() {
             <SelectItem value="rejected">Rejected</SelectItem>
           </SelectContent>
         </Select>
-        <Select value={categoryFilter} onValueChange={setCategoryFilter}>
+        <Select value={categoryFilter} onValueChange={handleCategoryFilter}>
           <SelectTrigger className="w-full sm:w-40">
             <SelectValue placeholder="Category" />
           </SelectTrigger>
@@ -118,7 +141,7 @@ export default function RequestsPage() {
         </Card>
       ) : (
         <div className="flex flex-col gap-2">
-          {filtered.map((req) => (
+          {paginatedRequests.map((req) => (
             <Link key={req.id} href={`/dashboard/requests/${req.id}`}>
               <Card className="transition-colors hover:bg-muted/30">
                 <CardContent className="flex flex-col gap-2 p-4 sm:flex-row sm:items-center sm:justify-between">
@@ -155,6 +178,48 @@ export default function RequestsPage() {
             </Link>
           ))}
         </div>
+
+        {/* Pagination */}
+        {totalPages > 1 && (
+          <div className="flex items-center justify-between pt-2">
+            <p className="text-sm text-muted-foreground">
+              Showing {(currentPage - 1) * ITEMS_PER_PAGE + 1}-{Math.min(currentPage * ITEMS_PER_PAGE, filtered.length)} of {filtered.length}
+            </p>
+            <div className="flex items-center gap-2">
+              <Button
+                variant="outline"
+                size="sm"
+                onClick={() => setCurrentPage((p) => Math.max(1, p - 1))}
+                disabled={currentPage === 1}
+              >
+                <ChevronLeft className="h-4 w-4 mr-1" />
+                Previous
+              </Button>
+              <div className="flex items-center gap-1">
+                {Array.from({ length: totalPages }, (_, i) => i + 1).map((page) => (
+                  <Button
+                    key={page}
+                    variant={currentPage === page ? "default" : "outline"}
+                    size="sm"
+                    className="h-8 w-8 p-0"
+                    onClick={() => setCurrentPage(page)}
+                  >
+                    {page}
+                  </Button>
+                ))}
+              </div>
+              <Button
+                variant="outline"
+                size="sm"
+                onClick={() => setCurrentPage((p) => Math.min(totalPages, p + 1))}
+                disabled={currentPage === totalPages}
+              >
+                Next
+                <ChevronRight className="h-4 w-4 ml-1" />
+              </Button>
+            </div>
+          </div>
+        )}
       )}
     </div>
   );
