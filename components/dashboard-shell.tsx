@@ -14,21 +14,22 @@ import {
 } from "@/components/ui/dropdown-menu"
 import { Sheet, SheetContent, SheetTrigger } from "@/components/ui/sheet"
 import {
-  Building2,
-  LayoutDashboard,
-  ClipboardList,
-  Megaphone,
-  BarChart3,
-  Users,
-  User,
-  LogOut,
-  Menu,
-  ChevronRight,
-  UtensilsCrossed,
-  Bell,
-  ExternalLink,
-  Settings,
-} from "lucide-react"
+    Building2,
+    LayoutDashboard,
+    ClipboardList,
+    Megaphone,
+    BarChart3,
+    Users,
+    User,
+    LogOut,
+    Menu,
+    ChevronRight,
+    UtensilsCrossed,
+    Bell,
+    ExternalLink,
+    Settings,
+    ChevronLeft,
+  } from "lucide-react"
 import Link from "next/link"
 import type { ReactNode } from "react"
 import { cn } from "@/lib/utils"
@@ -236,16 +237,18 @@ function SidebarContent({ onLinkClick }: { onLinkClick?: () => void }) {
 
   return (
     <div className="flex h-full flex-col">
-      <div className="flex h-14 items-center gap-2 border-b border-sidebar-border px-4">
-        <div className="flex h-8 w-8 items-center justify-center rounded-md bg-sidebar-primary">
-          <Building2 className="h-4 w-4 text-sidebar-primary-foreground" />
+      <div className="flex h-14 items-center justify-between gap-2 border-b border-sidebar-border px-4">
+        <div className="flex items-center gap-2">
+          <div className="flex h-8 w-8 items-center justify-center rounded-md bg-sidebar-primary">
+            <Building2 className="h-4 w-4 text-sidebar-primary-foreground" />
+          </div>
+          <span className="text-sm font-semibold text-sidebar-foreground">
+            WorkOps
+          </span>
         </div>
-        <span className="text-sm font-semibold text-sidebar-foreground">
-          WorkOps
-        </span>
       </div>
 
-      <nav className="flex-1 p-3">
+      <nav className="flex-1 overflow-y-auto p-3">
         <div className="flex flex-col gap-1">
           {filteredItems.map((item) => {
             const isActive = pathname === item.href
@@ -255,16 +258,18 @@ function SidebarContent({ onLinkClick }: { onLinkClick?: () => void }) {
                 href={item.href}
                 onClick={onLinkClick}
                 className={cn(
-                  "flex items-center gap-3 rounded-md px-3 py-2 text-sm transition-colors",
+                  "flex items-center gap-3 rounded-lg px-3 py-2.5 text-sm font-medium transition-all duration-200",
                   isActive
-                    ? "bg-sidebar-accent text-sidebar-accent-foreground font-medium"
+                    ? "bg-sidebar-accent text-sidebar-accent-foreground shadow-sm"
                     : "text-sidebar-foreground/70 hover:bg-sidebar-accent/50 hover:text-sidebar-accent-foreground"
                 )}
               >
-                {item.icon}
-                {item.label}
+                <span className="flex h-5 w-5 items-center justify-center flex-shrink-0">
+                  {item.icon}
+                </span>
+                <span className="flex-1">{item.label}</span>
                 {isActive && (
-                  <ChevronRight className="ml-auto h-3 w-3 text-sidebar-primary" />
+                  <ChevronRight className="h-4 w-4 text-sidebar-primary flex-shrink-0" />
                 )}
               </Link>
             )
@@ -273,17 +278,17 @@ function SidebarContent({ onLinkClick }: { onLinkClick?: () => void }) {
       </nav>
 
       <div className="border-t border-sidebar-border p-3">
-        <div className="flex items-center gap-3 rounded-md px-3 py-2">
+        <div className="flex items-center gap-3 rounded-lg px-3 py-2">
           <Avatar className="h-8 w-8">
-            <AvatarFallback className="bg-sidebar-primary text-sidebar-primary-foreground text-xs">
+            <AvatarFallback className="bg-sidebar-primary text-sidebar-primary-foreground text-xs font-semibold">
               {getInitials(user?.name || "U")}
             </AvatarFallback>
           </Avatar>
-          <div className="flex flex-col">
-            <span className="text-xs font-medium text-sidebar-foreground">
+          <div className="flex flex-col min-w-0">
+            <span className="text-xs font-semibold text-sidebar-foreground truncate">
               {user?.name}
             </span>
-            <span className="text-[10px] text-sidebar-foreground/50">
+            <span className="text-[10px] text-sidebar-foreground/50 truncate">
               {getRoleLabel(user?.role || "")}
             </span>
           </div>
@@ -296,7 +301,9 @@ function SidebarContent({ onLinkClick }: { onLinkClick?: () => void }) {
 export function DashboardShell({ children }: { children: ReactNode }) {
   const { user, isAuthenticated, logout } = useAuth()
   const router = useRouter()
+  const pathname = usePathname()
   const [mobileOpen, setMobileOpen] = useState(false)
+  const [sidebarCollapsed, setSidebarCollapsed] = useState(false)
 
   useEffect(() => {
     if (!isAuthenticated) {
@@ -311,8 +318,105 @@ export function DashboardShell({ children }: { children: ReactNode }) {
   return (
     <div className="flex h-screen overflow-hidden">
       {/* Desktop Sidebar */}
-      <aside className="hidden w-56 flex-shrink-0 border-r border-sidebar-border bg-sidebar lg:block">
-        <SidebarContent />
+      <aside
+        className={cn(
+          "hidden flex-shrink-0 border-r border-sidebar-border bg-sidebar transition-all duration-300 ease-in-out lg:flex lg:flex-col",
+          sidebarCollapsed ? "w-20" : "w-56"
+        )}
+      >
+        <div className="flex h-full flex-col">
+          {/* Sidebar Header with Toggle */}
+          <div className="flex h-14 items-center justify-between gap-2 border-b border-sidebar-border px-4">
+            {!sidebarCollapsed && (
+              <div className="flex items-center gap-2">
+                <div className="flex h-8 w-8 items-center justify-center rounded-md bg-sidebar-primary">
+                  <Building2 className="h-4 w-4 text-sidebar-primary-foreground" />
+                </div>
+                <span className="text-sm font-semibold text-sidebar-foreground">
+                  WorkOps
+                </span>
+              </div>
+            )}
+            {sidebarCollapsed && (
+              <div className="flex h-8 w-8 items-center justify-center rounded-md bg-sidebar-primary">
+                <Building2 className="h-4 w-4 text-sidebar-primary-foreground" />
+              </div>
+            )}
+            <Button
+              variant="ghost"
+              size="icon"
+              onClick={() => setSidebarCollapsed(!sidebarCollapsed)}
+              className="h-8 w-8 text-sidebar-foreground hover:bg-sidebar-accent"
+              title={sidebarCollapsed ? "Expand sidebar" : "Collapse sidebar"}
+            >
+              {sidebarCollapsed ? (
+                <ChevronRight className="h-4 w-4" />
+              ) : (
+                <ChevronLeft className="h-4 w-4" />
+              )}
+            </Button>
+          </div>
+
+          {/* Navigation - Hidden when collapsed */}
+          {!sidebarCollapsed && <SidebarContent />}
+
+          {/* Collapsed Navigation Icons */}
+          {sidebarCollapsed && (
+            <nav className="flex-1 overflow-y-auto p-2">
+              <div className="flex flex-col gap-2">
+                {navItems
+                  .filter((item) => item.roles.includes(user?.role || ""))
+                  .map((item) => {
+                    const isActive = pathname === item.href
+                    return (
+                      <Link
+                        key={item.href}
+                        href={item.href}
+                        title={item.label}
+                        className={cn(
+                          "flex h-10 w-10 items-center justify-center rounded-lg transition-all duration-200",
+                          isActive
+                            ? "bg-sidebar-accent text-sidebar-accent-foreground shadow-sm"
+                            : "text-sidebar-foreground/70 hover:bg-sidebar-accent/50 hover:text-sidebar-accent-foreground"
+                        )}
+                      >
+                        <span className="flex h-5 w-5 items-center justify-center">
+                          {item.icon}
+                        </span>
+                      </Link>
+                    )
+                  })}
+              </div>
+            </nav>
+          )}
+
+          {/* Sidebar Footer - Avatar always visible */}
+          <div className="border-t border-sidebar-border p-3">
+            <div
+              className={cn(
+                "flex items-center gap-3 rounded-lg px-3 py-2",
+                sidebarCollapsed && "justify-center"
+              )}
+              title={sidebarCollapsed ? user?.name : undefined}
+            >
+              <Avatar className="h-8 w-8 flex-shrink-0">
+                <AvatarFallback className="bg-sidebar-primary text-sidebar-primary-foreground text-xs font-semibold">
+                  {getInitials(user?.name || "U")}
+                </AvatarFallback>
+              </Avatar>
+              {!sidebarCollapsed && (
+                <div className="flex flex-col min-w-0">
+                  <span className="text-xs font-semibold text-sidebar-foreground truncate">
+                    {user?.name}
+                  </span>
+                  <span className="text-[10px] text-sidebar-foreground/50 truncate">
+                    {getRoleLabel(user?.role || "")}
+                  </span>
+                </div>
+              )}
+            </div>
+          </div>
+        </div>
       </aside>
 
       {/* Main content */}
@@ -349,7 +453,7 @@ export function DashboardShell({ children }: { children: ReactNode }) {
               <DropdownMenuTrigger asChild>
                 <Button variant="ghost" className="gap-2 text-foreground">
                   <Avatar className="h-7 w-7">
-                    <AvatarFallback className="bg-primary text-primary-foreground text-xs">
+                    <AvatarFallback className="bg-primary text-primary-foreground text-xs font-semibold">
                       {getInitials(user.name)}
                     </AvatarFallback>
                   </Avatar>
@@ -398,9 +502,9 @@ export function DashboardShell({ children }: { children: ReactNode }) {
                 >
                   <LogOut className="mr-2 h-4 w-4" />
                   Sign out
-              </DropdownMenuItem>
-            </DropdownMenuContent>
-          </DropdownMenu>
+                </DropdownMenuItem>
+              </DropdownMenuContent>
+            </DropdownMenu>
           </div>
         </header>
 
