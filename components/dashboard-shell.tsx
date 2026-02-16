@@ -28,13 +28,12 @@ import {
     Bell,
     ExternalLink,
     Settings,
-    ChevronLeft,
     PanelLeft,
   } from "lucide-react"
 import Link from "next/link"
 import type { ReactNode } from "react"
 import { cn } from "@/lib/utils"
-import { useNotifications, useMarkNotificationRead } from "@/lib/queries"
+import { useNotifications, useMarkNotificationRead, useLunchTokens } from "@/lib/queries"
 import { Skeleton } from "@/components/ui/skeleton"
 import { format } from "date-fns"
 import {
@@ -43,12 +42,20 @@ import {
   PopoverTrigger,
 } from "@/components/ui/popover"
 import { ScrollArea } from "@/components/ui/scroll-area"
+import {
+  Tooltip,
+  TooltipContent,
+  TooltipProvider,
+  TooltipTrigger,
+} from "@/components/ui/tooltip"
 
 interface NavItem {
   label: string
   href: string
   icon: ReactNode
   roles: string[]
+  badgeKey?: string
+  section?: string
 }
 
 const navItems: NavItem[] = [
@@ -57,38 +64,49 @@ const navItems: NavItem[] = [
     href: "/dashboard",
     icon: <LayoutDashboard className="h-4 w-4" />,
     roles: ["employee", "admin", "superadmin"],
+    section: "General",
   },
   {
     label: "Service Requests",
     href: "/dashboard/requests",
     icon: <ClipboardList className="h-4 w-4" />,
     roles: ["employee", "admin", "superadmin"],
+    section: "General",
   },
   {
     label: "Lunch Token",
     href: "/dashboard/lunch",
     icon: <UtensilsCrossed className="h-4 w-4" />,
     roles: ["employee", "admin", "superadmin"],
+    badgeKey: "lunchToken",
+    section: "General",
   },
   {
     label: "Announcements",
     href: "/dashboard/announcements",
     icon: <Megaphone className="h-4 w-4" />,
     roles: ["employee", "admin", "superadmin"],
+    section: "General",
   },
   {
     label: "Analytics",
     href: "/dashboard/analytics",
     icon: <BarChart3 className="h-4 w-4" />,
     roles: ["admin", "superadmin"],
+    section: "Administration",
   },
   {
     label: "User Management",
     href: "/dashboard/users",
     icon: <Users className="h-4 w-4" />,
     roles: ["superadmin"],
+    section: "Administration",
   },
 ]
+
+function getToday() {
+  return new Date().toISOString().split("T")[0]
+}
 
 function getInitials(name: string) {
   return name
@@ -229,88 +247,138 @@ function NotificationPopover({ userId }: { userId: string }) {
   )
 }
 
-function SidebarNav({ onLinkClick, collapsed }: { onLinkClick?: () => void; collapsed?: boolean }) {
+function SidebarNav({ onLinkClick, collapsed, badges }: { onLinkClick?: () => void; collapsed?: boolean; badges?: Record<string, number> }) {
   const { user } = useAuth()
   const pathname = usePathname()
   const filteredItems = navItems.filter((item) =>
     item.roles.includes(user?.role || "")
   )
 
+  // Group items by section
+  const sections: { label: string; items: typeof filteredItems }[] = []
+  const sectionMap = new Map<string, typeof filteredItems>()
+  for (const item of filteredItems) {
+    const sec = item.section || "General"
+    if (!sectionMap.has(sec)) {
+      sectionMap.set(sec, [])
+      sections.push({ label: sec, items: sectionMap.get(sec)! })
+    }
+    sectionMap.get(sec)!.push(item)
+  }
+
   if (collapsed) {
     return (
-      <nav className="flex-1 overflow-y-auto p-2">
-        <div className="flex flex-col gap-2 items-center">
-          {filteredItems.map((item) => {
-            const isActive = pathname === item.href
-            return (
-              <Link
-                key={item.href}
-                href={item.href}
-                onClick={onLinkClick}
-                title={item.label}
-                className={cn(
-                  "flex h-10 w-10 items-center justify-center rounded-lg transition-all duration-200 flex-shrink-0",
-                  isActive
-                    ? "bg-sidebar-accent text-sidebar-accent-foreground shadow-sm"
-                    : "text-sidebar-foreground/70 hover:bg-sidebar-accent/50 hover:text-sidebar-accent-foreground"
-                )}
-              >
-                {item.icon}
-              </Link>
-            )
-          })}
-        </div>
-      </nav>
+      <TooltipProvider delayDuration={0}>
+        <nav className="flex-1 overflow-y-auto py-3 px-2">
+          <div className="flex flex-col gap-1.5 items-center">
+            {filteredItems.map((item) => {
+              const isActive = pathname === item.href
+              const badgeCount = item.badgeKey ? (badges?.[item.badgeKey] ?? 0) : 0
+              return (
+                <Tooltip key={item.href}>
+                  <TooltipTrigger asChild>
+                    <Link
+                      href={item.href}
+                      onClick={onLinkClick}
+                      className={cn(
+                        "relative flex h-10 w-10 items-center justify-center rounded-lg transition-all duration-200 flex-shrink-0",
+                        isActive
+                          ? "bg-sidebar-primary text-sidebar-primary-foreground shadow-md"
+                          : "text-sidebar-foreground/60 hover:bg-sidebar-accent hover:text-sidebar-accent-foreground"
+                      )}
+                    >
+                      {item.icon}
+                      {badgeCount > 0 && (
+                        <span className="absolute -right-1 -top-1 flex h-4 w-4 items-center justify-center rounded-full bg-orange-500 text-[9px] font-bold text-white">
+                          {badgeCount > 9 ? "9+" : badgeCount}
+                        </span>
+                      )}
+                    </Link>
+                  </TooltipTrigger>
+                  <TooltipContent side="right" className="text-xs">
+                    {item.label}
+                    {badgeCount > 0 && ` (${badgeCount})`}
+                  </TooltipContent>
+                </Tooltip>
+              )
+            })}
+          </div>
+        </nav>
+      </TooltipProvider>
     )
   }
 
   return (
-    <nav className="flex-1 overflow-y-auto p-3">
-      <div className="flex flex-col gap-1">
-        {filteredItems.map((item) => {
-          const isActive = pathname === item.href
-          return (
-            <Link
-              key={item.href}
-              href={item.href}
-              onClick={onLinkClick}
-              className={cn(
-                "flex items-center gap-3 rounded-lg px-3 py-2.5 text-sm font-medium transition-all duration-200",
-                isActive
-                  ? "bg-sidebar-accent text-sidebar-accent-foreground shadow-sm"
-                  : "text-sidebar-foreground/70 hover:bg-sidebar-accent/50 hover:text-sidebar-accent-foreground"
-              )}
-            >
-              <span className="flex h-5 w-5 items-center justify-center flex-shrink-0">
-                {item.icon}
-              </span>
-              <span>{item.label}</span>
-              {isActive && (
-                <ChevronRight className="ml-auto h-4 w-4 text-sidebar-primary" />
-              )}
-            </Link>
-          )
-        })}
+    <nav className="flex-1 overflow-y-auto py-3 px-3">
+      <div className="flex flex-col gap-5">
+        {sections.map((section) => (
+          <div key={section.label} className="flex flex-col gap-1">
+            <span className="mb-1 px-3 text-[10px] font-semibold uppercase tracking-wider text-sidebar-foreground/40">
+              {section.label}
+            </span>
+            {section.items.map((item) => {
+              const isActive = pathname === item.href
+              const badgeCount = item.badgeKey ? (badges?.[item.badgeKey] ?? 0) : 0
+              return (
+                <Link
+                  key={item.href}
+                  href={item.href}
+                  onClick={onLinkClick}
+                  className={cn(
+                    "group flex items-center gap-3 rounded-lg px-3 py-2 text-sm font-medium transition-all duration-200",
+                    isActive
+                      ? "bg-sidebar-primary text-sidebar-primary-foreground shadow-md"
+                      : "text-sidebar-foreground/60 hover:bg-sidebar-accent hover:text-sidebar-accent-foreground"
+                  )}
+                >
+                  <span className={cn(
+                    "flex h-5 w-5 items-center justify-center flex-shrink-0 transition-colors",
+                    isActive ? "text-sidebar-primary-foreground" : "text-sidebar-foreground/50 group-hover:text-sidebar-accent-foreground"
+                  )}>
+                    {item.icon}
+                  </span>
+                  <span className="flex-1 truncate">{item.label}</span>
+                  {badgeCount > 0 && (
+                    <span className={cn(
+                      "flex h-5 min-w-[20px] items-center justify-center rounded-full px-1.5 text-[10px] font-bold",
+                      isActive
+                        ? "bg-white/20 text-sidebar-primary-foreground"
+                        : "bg-orange-500 text-white"
+                    )}>
+                      {badgeCount > 99 ? "99+" : badgeCount}
+                    </span>
+                  )}
+                  {isActive && badgeCount === 0 && (
+                    <ChevronRight className="ml-auto h-4 w-4 opacity-60" />
+                  )}
+                </Link>
+              )
+            })}
+          </div>
+        ))}
       </div>
     </nav>
   )
 }
 
-function MobileSidebarContent({ onLinkClick }: { onLinkClick?: () => void }) {
+function MobileSidebarContent({ onLinkClick, badges }: { onLinkClick?: () => void; badges?: Record<string, number> }) {
   const { user } = useAuth()
   return (
     <div className="flex h-full flex-col">
-      <div className="flex h-14 items-center gap-2 border-b border-sidebar-border px-4">
-        <div className="flex h-8 w-8 items-center justify-center rounded-md bg-sidebar-primary">
-          <Building2 className="h-4 w-4 text-sidebar-primary-foreground" />
+      <div className="flex h-14 items-center gap-3 border-b border-sidebar-border px-4">
+        <div className="flex h-9 w-9 items-center justify-center rounded-lg bg-sidebar-primary shadow-md">
+          <Building2 className="h-5 w-5 text-sidebar-primary-foreground" />
         </div>
-        <span className="text-sm font-semibold text-sidebar-foreground">
-          WorkOps
-        </span>
+        <div className="flex flex-col">
+          <span className="text-sm font-bold text-sidebar-foreground tracking-tight">
+            WorkOps
+          </span>
+          <span className="text-[10px] text-sidebar-foreground/40">Workplace Portal</span>
+        </div>
       </div>
-      <SidebarNav onLinkClick={onLinkClick} />
+      <SidebarNav onLinkClick={onLinkClick} badges={badges} />
       <div className="border-t border-sidebar-border p-3">
-        <div className="flex items-center gap-3 rounded-lg px-3 py-2">
+        <div className="flex items-center gap-3 rounded-lg bg-sidebar-accent/50 px-3 py-2.5">
           <Avatar className="h-8 w-8">
             <AvatarFallback className="bg-sidebar-primary text-sidebar-primary-foreground text-xs font-semibold">
               {getInitials(user?.name || "U")}
@@ -320,7 +388,7 @@ function MobileSidebarContent({ onLinkClick }: { onLinkClick?: () => void }) {
             <span className="text-xs font-semibold text-sidebar-foreground truncate">
               {user?.name}
             </span>
-            <span className="text-[10px] text-sidebar-foreground/50 truncate">
+            <span className="text-[10px] text-sidebar-foreground/40 truncate">
               {getRoleLabel(user?.role || "")}
             </span>
           </div>
@@ -335,6 +403,14 @@ export function DashboardShell({ children }: { children: ReactNode }) {
   const router = useRouter()
   const [mobileOpen, setMobileOpen] = useState(false)
   const [sidebarCollapsed, setSidebarCollapsed] = useState(false)
+
+  const today = getToday()
+  const { data: todayTokens } = useLunchTokens(today)
+  const lunchCount = todayTokens?.length ?? 0
+
+  const badges: Record<string, number> = {
+    lunchToken: lunchCount,
+  }
 
   useEffect(() => {
     if (!isAuthenticated) {
@@ -352,7 +428,7 @@ export function DashboardShell({ children }: { children: ReactNode }) {
       <aside 
         className={cn(
           "hidden border-r border-sidebar-border bg-sidebar transition-all duration-300 ease-in-out lg:flex lg:flex-col flex-shrink-0",
-          sidebarCollapsed ? "w-16" : "w-56"
+          sidebarCollapsed ? "w-[68px]" : "w-60"
         )}
       >
         <div className="flex h-full flex-col">
@@ -362,28 +438,33 @@ export function DashboardShell({ children }: { children: ReactNode }) {
             sidebarCollapsed ? "justify-center px-2" : "justify-between px-4"
           )}>
             {!sidebarCollapsed && (
-              <div className="flex items-center gap-2">
-                <div className="flex h-8 w-8 items-center justify-center rounded-md bg-sidebar-primary">
-                  <Building2 className="h-4 w-4 text-sidebar-primary-foreground" />
+              <div className="flex items-center gap-3">
+                <div className="flex h-9 w-9 items-center justify-center rounded-lg bg-sidebar-primary shadow-md">
+                  <Building2 className="h-5 w-5 text-sidebar-primary-foreground" />
                 </div>
-                <span className="text-sm font-semibold text-sidebar-foreground">
-                  WorkOps
-                </span>
+                <div className="flex flex-col">
+                  <span className="text-sm font-bold text-sidebar-foreground tracking-tight">
+                    WorkOps
+                  </span>
+                  <span className="text-[10px] text-sidebar-foreground/40">Workplace Portal</span>
+                </div>
               </div>
             )}
             <Button
               variant="ghost"
               size="icon"
               onClick={() => setSidebarCollapsed(!sidebarCollapsed)}
-              className="h-8 w-8 text-sidebar-foreground hover:bg-sidebar-accent/50 flex-shrink-0"
+              className={cn(
+                "h-8 w-8 text-sidebar-foreground/60 hover:bg-sidebar-accent hover:text-sidebar-foreground flex-shrink-0 transition-colors",
+              )}
               title={sidebarCollapsed ? "Expand sidebar" : "Collapse sidebar"}
             >
-              <PanelLeft className="h-5 w-5" />
+              <PanelLeft className="h-4 w-4" />
             </Button>
           </div>
 
           {/* Sidebar Nav */}
-          <SidebarNav collapsed={sidebarCollapsed} />
+          <SidebarNav collapsed={sidebarCollapsed} badges={badges} />
 
           {/* Footer */}
           <div className={cn(
@@ -391,20 +472,32 @@ export function DashboardShell({ children }: { children: ReactNode }) {
             sidebarCollapsed ? "p-2" : "p-3"
           )}>
             <div className={cn(
-              "flex items-center rounded-lg",
-              sidebarCollapsed ? "justify-center" : "gap-3 px-3 py-2"
+              "flex items-center rounded-lg transition-colors",
+              sidebarCollapsed ? "justify-center py-1" : "gap-3 bg-sidebar-accent/50 px-3 py-2.5"
             )}>
-              <Avatar className="h-8 w-8">
-                <AvatarFallback className="bg-sidebar-primary text-sidebar-primary-foreground text-xs font-semibold">
-                  {getInitials(user?.name || "U")}
-                </AvatarFallback>
-              </Avatar>
+              <TooltipProvider delayDuration={0}>
+                <Tooltip>
+                  <TooltipTrigger asChild>
+                    <Avatar className="h-8 w-8 flex-shrink-0">
+                      <AvatarFallback className="bg-sidebar-primary text-sidebar-primary-foreground text-xs font-semibold">
+                        {getInitials(user?.name || "U")}
+                      </AvatarFallback>
+                    </Avatar>
+                  </TooltipTrigger>
+                  {sidebarCollapsed && (
+                    <TooltipContent side="right" className="text-xs">
+                      <p className="font-semibold">{user?.name}</p>
+                      <p className="text-muted-foreground">{getRoleLabel(user?.role || "")}</p>
+                    </TooltipContent>
+                  )}
+                </Tooltip>
+              </TooltipProvider>
               {!sidebarCollapsed && (
                 <div className="flex flex-col min-w-0">
                   <span className="text-xs font-semibold text-sidebar-foreground truncate">
                     {user?.name}
                   </span>
-                  <span className="text-[10px] text-sidebar-foreground/50 truncate">
+                  <span className="text-[10px] text-sidebar-foreground/40 truncate">
                     {getRoleLabel(user?.role || "")}
                   </span>
                 </div>
@@ -434,7 +527,7 @@ export function DashboardShell({ children }: { children: ReactNode }) {
                 side="left"
                 className="w-56 bg-sidebar p-0 text-sidebar-foreground"
               >
-                <MobileSidebarContent onLinkClick={() => setMobileOpen(false)} />
+                <MobileSidebarContent onLinkClick={() => setMobileOpen(false)} badges={badges} />
               </SheetContent>
             </Sheet>
             <h1 className="text-sm font-medium text-foreground lg:hidden">
