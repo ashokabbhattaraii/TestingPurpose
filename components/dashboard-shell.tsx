@@ -33,7 +33,7 @@ import {
 import Link from "next/link"
 import type { ReactNode } from "react"
 import { cn } from "@/lib/utils"
-import { useNotifications, useMarkNotificationRead, useLunchTokens } from "@/lib/queries"
+import { useNotifications, useMarkNotificationRead } from "@/lib/queries"
 import { Skeleton } from "@/components/ui/skeleton"
 import { format } from "date-fns"
 import {
@@ -103,10 +103,6 @@ const navItems: NavItem[] = [
     section: "Administration",
   },
 ]
-
-function getToday() {
-  return new Date().toISOString().split("T")[0]
-}
 
 function getInitials(name: string) {
   return name
@@ -404,12 +400,9 @@ export function DashboardShell({ children }: { children: ReactNode }) {
   const [mobileOpen, setMobileOpen] = useState(false)
   const [sidebarCollapsed, setSidebarCollapsed] = useState(false)
 
-  const today = getToday()
-  const { data: todayTokens } = useLunchTokens(today)
-  const lunchCount = todayTokens?.length ?? 0
-
+  // Hardcoded lunch token badge count
   const badges: Record<string, number> = {
-    lunchToken: lunchCount,
+    lunchToken: 30,
   }
 
   useEffect(() => {
