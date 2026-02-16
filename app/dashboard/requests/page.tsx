@@ -140,86 +140,88 @@ export default function RequestsPage() {
           </CardContent>
         </Card>
       ) : (
-        <div className="flex flex-col gap-2">
-          {paginatedRequests.map((req) => (
-            <Link key={req.id} href={`/dashboard/requests/${req.id}`}>
-              <Card className="transition-colors hover:bg-muted/30">
-                <CardContent className="flex flex-col gap-2 p-4 sm:flex-row sm:items-center sm:justify-between">
-                  <div className="flex flex-col gap-1">
-                    <div className="flex items-center gap-2">
-                      <span className="text-xs font-mono text-muted-foreground">
-                        {req.id}
+        <>
+          <div className="flex flex-col gap-2">
+            {paginatedRequests.map((req) => (
+              <Link key={req.id} href={`/dashboard/requests/${req.id}`}>
+                <Card className="transition-colors hover:bg-muted/30">
+                  <CardContent className="flex flex-col gap-2 p-4 sm:flex-row sm:items-center sm:justify-between">
+                    <div className="flex flex-col gap-1">
+                      <div className="flex items-center gap-2">
+                        <span className="text-xs font-mono text-muted-foreground">
+                          {req.id}
+                        </span>
+                        <span className="text-xs capitalize text-muted-foreground">
+                          {req.category}{" "}
+                          {req.category === ("Other" as RequestCategory) &&
+                          req.otherCategory
+                            ? `- ${req.otherCategory}`
+                            : ""}
+                        </span>
+                      </div>
+                      <span className="text-sm font-medium text-foreground">
+                        {req.title}
                       </span>
-                      <span className="text-xs capitalize text-muted-foreground">
-                        {req.category}{" "}
-                        {req.category === ("Other" as RequestCategory) &&
-                        req.otherCategory
-                          ? `- ${req.otherCategory}`
-                          : ""}
-                      </span>
+                      {!isEmployee && (
+                        <span className="text-xs text-muted-foreground">
+                          by {req.createdByName}
+                        </span>
+                      )}
                     </div>
-                    <span className="text-sm font-medium text-foreground">
-                      {req.title}
-                    </span>
-                    {!isEmployee && (
+                    <div className="flex items-center gap-3">
                       <span className="text-xs text-muted-foreground">
-                        by {req.createdByName}
+                        {format(new Date(req.createdAt), "MMM d, yyyy")}
                       </span>
-                    )}
-                  </div>
-                  <div className="flex items-center gap-3">
-                    <span className="text-xs text-muted-foreground">
-                      {format(new Date(req.createdAt), "MMM d, yyyy")}
-                    </span>
-                    <StatusBadge status={req.status} />
-                  </div>
-                </CardContent>
-              </Card>
-            </Link>
-          ))}
-        </div>
-
-        {/* Pagination */}
-        {totalPages > 1 && (
-          <div className="flex items-center justify-between pt-2">
-            <p className="text-sm text-muted-foreground">
-              Showing {(currentPage - 1) * ITEMS_PER_PAGE + 1}-{Math.min(currentPage * ITEMS_PER_PAGE, filtered.length)} of {filtered.length}
-            </p>
-            <div className="flex items-center gap-2">
-              <Button
-                variant="outline"
-                size="sm"
-                onClick={() => setCurrentPage((p) => Math.max(1, p - 1))}
-                disabled={currentPage === 1}
-              >
-                <ChevronLeft className="h-4 w-4 mr-1" />
-                Previous
-              </Button>
-              <div className="flex items-center gap-1">
-                {Array.from({ length: totalPages }, (_, i) => i + 1).map((page) => (
-                  <Button
-                    key={page}
-                    variant={currentPage === page ? "default" : "outline"}
-                    size="sm"
-                    className="h-8 w-8 p-0"
-                    onClick={() => setCurrentPage(page)}
-                  >
-                    {page}
-                  </Button>
-                ))}
-              </div>
-              <Button
-                variant="outline"
-                size="sm"
-                onClick={() => setCurrentPage((p) => Math.min(totalPages, p + 1))}
-                disabled={currentPage === totalPages}
-              >
-                Next
-                <ChevronRight className="h-4 w-4 ml-1" />
-              </Button>
-            </div>
+                      <StatusBadge status={req.status} />
+                    </div>
+                  </CardContent>
+                </Card>
+              </Link>
+            ))}
           </div>
-        )}
+
+          {/* Pagination */}
+          {totalPages > 1 && (
+            <div className="flex items-center justify-between pt-2">
+              <p className="text-sm text-muted-foreground">
+                Showing {(currentPage - 1) * ITEMS_PER_PAGE + 1}-{Math.min(currentPage * ITEMS_PER_PAGE, filtered.length)} of {filtered.length}
+              </p>
+              <div className="flex items-center gap-2">
+                <Button
+                  variant="outline"
+                  size="sm"
+                  onClick={() => setCurrentPage((p) => Math.max(1, p - 1))}
+                  disabled={currentPage === 1}
+                >
+                  <ChevronLeft className="h-4 w-4 mr-1" />
+                  Previous
+                </Button>
+                <div className="flex items-center gap-1">
+                  {Array.from({ length: totalPages }, (_, i) => i + 1).map((page) => (
+                    <Button
+                      key={page}
+                      variant={currentPage === page ? "default" : "outline"}
+                      size="sm"
+                      className="h-8 w-8 p-0"
+                      onClick={() => setCurrentPage(page)}
+                    >
+                      {page}
+                    </Button>
+                  ))}
+                </div>
+                <Button
+                  variant="outline"
+                  size="sm"
+                  onClick={() => setCurrentPage((p) => Math.min(totalPages, p + 1))}
+                  disabled={currentPage === totalPages}
+                >
+                  Next
+                  <ChevronRight className="h-4 w-4 ml-1" />
+                </Button>
+              </div>
+            </div>
+          )}
+        </>
       )}
     </div>
   );

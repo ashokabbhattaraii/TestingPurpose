@@ -154,104 +154,106 @@ export default function AnnouncementsPage() {
           </CardContent>
         </Card>
       ) : (
-        <div className="flex flex-col gap-3">
-          {paginatedAnnouncements.map((ann) => (
-            <Card
-              key={ann.id}
-              className={ann.pinned ? "border-primary/30 bg-primary/[0.02]" : ""}
-            >
-              <CardContent className="flex flex-col gap-2 p-4">
-                <div className="flex items-start justify-between gap-2">
-                  <div className="flex items-center gap-2">
-                    <Megaphone className="h-4 w-4 flex-shrink-0 text-primary" />
-                    <h3 className="text-sm font-medium text-foreground">
-                      {ann.title}
-                    </h3>
-                    {ann.pinned && (
-                      <Badge
-                        variant="outline"
-                        className="border-primary/30 text-primary text-xs gap-1"
+        <>
+          <div className="flex flex-col gap-3">
+            {paginatedAnnouncements.map((ann) => (
+              <Card
+                key={ann.id}
+                className={ann.pinned ? "border-primary/30 bg-primary/[0.02]" : ""}
+              >
+                <CardContent className="flex flex-col gap-2 p-4">
+                  <div className="flex items-start justify-between gap-2">
+                    <div className="flex items-center gap-2">
+                      <Megaphone className="h-4 w-4 flex-shrink-0 text-primary" />
+                      <h3 className="text-sm font-medium text-foreground">
+                        {ann.title}
+                      </h3>
+                      {ann.pinned && (
+                        <Badge
+                          variant="outline"
+                          className="border-primary/30 text-primary text-xs gap-1"
+                        >
+                          <Pin className="h-3 w-3" />
+                          Pinned
+                        </Badge>
+                      )}
+                    </div>
+                    {canCreate && (
+                      <Button
+                        variant="ghost"
+                        size="sm"
+                        className="h-auto px-2 py-1 text-xs"
+                        onClick={() => handleTogglePin(ann.id, ann.pinned)}
+                        disabled={pinAnnouncement.isPending}
+                        title={ann.pinned ? "Unpin announcement" : "Pin announcement"}
                       >
-                        <Pin className="h-3 w-3" />
-                        Pinned
-                      </Badge>
+                        <Pin
+                          className={`h-3.5 w-3.5 ${
+                            ann.pinned
+                              ? "fill-primary text-primary"
+                              : "text-muted-foreground"
+                          }`}
+                        />
+                      </Button>
                     )}
                   </div>
-                  {canCreate && (
-                    <Button
-                      variant="ghost"
-                      size="sm"
-                      className="h-auto px-2 py-1 text-xs"
-                      onClick={() => handleTogglePin(ann.id, ann.pinned)}
-                      disabled={pinAnnouncement.isPending}
-                      title={ann.pinned ? "Unpin announcement" : "Pin announcement"}
-                    >
-                      <Pin
-                        className={`h-3.5 w-3.5 ${
-                          ann.pinned
-                            ? "fill-primary text-primary"
-                            : "text-muted-foreground"
-                        }`}
-                      />
-                    </Button>
-                  )}
-                </div>
-                <p className="text-sm leading-relaxed text-foreground/80">
-                  {ann.content}
-                </p>
-                <div className="flex items-center gap-2 text-xs text-muted-foreground">
-                  <span>{ann.authorName}</span>
-                  <span>-</span>
-                  <span>
-                    {format(new Date(ann.createdAt), "MMM d, yyyy")}
-                  </span>
-                </div>
-              </CardContent>
-            </Card>
-          ))}
-        </div>
-
-        {/* Pagination */}
-        {totalPages > 1 && (
-          <div className="flex items-center justify-between pt-2">
-            <p className="text-sm text-muted-foreground">
-              Showing {(currentPage - 1) * ITEMS_PER_PAGE + 1}-{Math.min(currentPage * ITEMS_PER_PAGE, totalAnnouncements)} of {totalAnnouncements}
-            </p>
-            <div className="flex items-center gap-2">
-              <Button
-                variant="outline"
-                size="sm"
-                onClick={() => setCurrentPage((p) => Math.max(1, p - 1))}
-                disabled={currentPage === 1}
-              >
-                <ChevronLeft className="h-4 w-4 mr-1" />
-                Previous
-              </Button>
-              <div className="flex items-center gap-1">
-                {Array.from({ length: totalPages }, (_, i) => i + 1).map((page) => (
-                  <Button
-                    key={page}
-                    variant={currentPage === page ? "default" : "outline"}
-                    size="sm"
-                    className="h-8 w-8 p-0"
-                    onClick={() => setCurrentPage(page)}
-                  >
-                    {page}
-                  </Button>
-                ))}
-              </div>
-              <Button
-                variant="outline"
-                size="sm"
-                onClick={() => setCurrentPage((p) => Math.min(totalPages, p + 1))}
-                disabled={currentPage === totalPages}
-              >
-                Next
-                <ChevronRight className="h-4 w-4 ml-1" />
-              </Button>
-            </div>
+                  <p className="text-sm leading-relaxed text-foreground/80">
+                    {ann.content}
+                  </p>
+                  <div className="flex items-center gap-2 text-xs text-muted-foreground">
+                    <span>{ann.authorName}</span>
+                    <span>-</span>
+                    <span>
+                      {format(new Date(ann.createdAt), "MMM d, yyyy")}
+                    </span>
+                  </div>
+                </CardContent>
+              </Card>
+            ))}
           </div>
-        )}
+
+          {/* Pagination */}
+          {totalPages > 1 && (
+            <div className="flex items-center justify-between pt-2">
+              <p className="text-sm text-muted-foreground">
+                Showing {(currentPage - 1) * ITEMS_PER_PAGE + 1}-{Math.min(currentPage * ITEMS_PER_PAGE, totalAnnouncements)} of {totalAnnouncements}
+              </p>
+              <div className="flex items-center gap-2">
+                <Button
+                  variant="outline"
+                  size="sm"
+                  onClick={() => setCurrentPage((p) => Math.max(1, p - 1))}
+                  disabled={currentPage === 1}
+                >
+                  <ChevronLeft className="h-4 w-4 mr-1" />
+                  Previous
+                </Button>
+                <div className="flex items-center gap-1">
+                  {Array.from({ length: totalPages }, (_, i) => i + 1).map((page) => (
+                    <Button
+                      key={page}
+                      variant={currentPage === page ? "default" : "outline"}
+                      size="sm"
+                      className="h-8 w-8 p-0"
+                      onClick={() => setCurrentPage(page)}
+                    >
+                      {page}
+                    </Button>
+                  ))}
+                </div>
+                <Button
+                  variant="outline"
+                  size="sm"
+                  onClick={() => setCurrentPage((p) => Math.min(totalPages, p + 1))}
+                  disabled={currentPage === totalPages}
+                >
+                  Next
+                  <ChevronRight className="h-4 w-4 ml-1" />
+                </Button>
+              </div>
+            </div>
+          )}
+        </>
       )}
     </div>
   )
