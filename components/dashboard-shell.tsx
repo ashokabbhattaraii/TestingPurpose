@@ -5,6 +5,7 @@ import { useRouter, usePathname } from "next/navigation"
 import { useEffect, useState } from "react"
 import { Button } from "@/components/ui/button"
 import { Avatar, AvatarFallback } from "@/components/ui/avatar"
+
 import {
   DropdownMenu,
   DropdownMenuContent,
@@ -14,22 +15,22 @@ import {
 } from "@/components/ui/dropdown-menu"
 import { Sheet, SheetContent, SheetTrigger } from "@/components/ui/sheet"
 import {
-    Building2,
-    LayoutDashboard,
-    ClipboardList,
-    Megaphone,
-    BarChart3,
-    Users,
-    User,
-    LogOut,
-    Menu,
-    ChevronRight,
-    UtensilsCrossed,
-    Bell,
-    ExternalLink,
-    Settings,
-    PanelLeft,
-  } from "lucide-react"
+  Building2,
+  LayoutDashboard,
+  ClipboardList,
+  Megaphone,
+  BarChart3,
+  Users,
+  User,
+  LogOut,
+  Menu,
+  ChevronRight,
+  UtensilsCrossed,
+  Bell,
+  ExternalLink,
+  Settings,
+  PanelLeft,
+} from "lucide-react"
 import Link from "next/link"
 import type { ReactNode } from "react"
 import { cn } from "@/lib/utils"
@@ -181,17 +182,15 @@ function NotificationPopover({ userId }: { userId: string }) {
                 >
                   <div className="flex items-start gap-2">
                     <div
-                      className={`mt-0.5 h-2 w-2 flex-shrink-0 rounded-full ${
-                        notif.read ? "bg-muted" : "bg-primary"
-                      }`}
+                      className={`mt-0.5 h-2 w-2 flex-shrink-0 rounded-full ${notif.read ? "bg-muted" : "bg-primary"
+                        }`}
                     />
                     <div className="flex-1 min-w-0">
                       <p
-                        className={`${
-                          notif.read
+                        className={`${notif.read
                             ? "text-muted-foreground"
                             : "font-medium text-foreground"
-                        }`}
+                          }`}
                       >
                         {notif.title}
                       </p>
@@ -478,7 +477,7 @@ export function DashboardShell({ children }: { children: ReactNode }) {
   return (
     <div className="flex h-screen overflow-hidden">
       {/* Desktop Sidebar */}
-      <aside 
+      <aside
         className={cn(
           "hidden border-r border-sidebar-border bg-sidebar transition-all duration-300 ease-in-out lg:flex lg:flex-col flex-shrink-0",
           sidebarCollapsed ? "w-[68px]" : "w-60"
