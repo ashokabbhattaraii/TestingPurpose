@@ -1,40 +1,41 @@
-"use client"
+"use client";
 
-import { useAuth } from "@/lib/auth-context"
-import { useServiceRequests, useAnnouncements } from "@/lib/queries"
-import { Card, CardContent, CardHeader, CardTitle } from "@/components/ui/card"
-import { Button } from "@/components/ui/button"
-import { Skeleton } from "@/components/ui/skeleton"
-import { StatusBadge } from "@/components/status-badge"
+import { useAuth } from "@/lib/auth-context";
+import { useServiceRequests, useAnnouncements } from "@/lib/queries";
+import { Card, CardContent, CardHeader, CardTitle } from "@/components/ui/card";
+import { Button } from "@/components/ui/button";
+import { Skeleton } from "@/components/ui/skeleton";
+import { StatusBadge } from "@/components/status-badge";
 import {
   ClipboardList,
   Clock,
   CheckCircle2,
   AlertCircle,
   BarChart3,
-} from "lucide-react"
-import Link from "next/link"
-import { format } from "date-fns"
+  Plus,
+} from "lucide-react";
+import Link from "next/link";
+import { format } from "date-fns";
 
 export function AdminDashboard() {
-  const { user } = useAuth()
-  const { data: requests, isLoading: reqLoading } = useServiceRequests()
-  const { data: announcements, isLoading: annLoading } = useAnnouncements()
+  const { user } = useAuth();
+  const { data: requests, isLoading: reqLoading } = useServiceRequests();
+  const { data: announcements, isLoading: annLoading } = useAnnouncements();
 
-  const pending = requests?.filter((r) => r.status === "pending").length ?? 0
+  const pending = requests?.filter((r) => r.status === "pending").length ?? 0;
   const inProgress =
-    requests?.filter((r) => r.status === "in-progress").length ?? 0
-  const resolved = requests?.filter((r) => r.status === "resolved").length ?? 0
-  const total = requests?.length ?? 0
+    requests?.filter((r) => r.status === "in-progress").length ?? 0;
+  const resolved = requests?.filter((r) => r.status === "resolved").length ?? 0;
+  const total = requests?.length ?? 0;
 
   const urgentRequests =
     requests
       ?.filter((r) => r.status === "pending" || r.status === "in-progress")
       .sort(
         (a, b) =>
-          new Date(b.createdAt).getTime() - new Date(a.createdAt).getTime()
+          new Date(b.createdAt).getTime() - new Date(a.createdAt).getTime(),
       )
-      .slice(0, 6) ?? []
+      .slice(0, 6) ?? [];
 
   return (
     <div className="flex flex-col gap-6">
@@ -47,12 +48,20 @@ export function AdminDashboard() {
             Manage and resolve office service requests.
           </p>
         </div>
-        <Button asChild size="sm" variant="outline">
-          <Link href="/dashboard/analytics">
-            <BarChart3 className="mr-1 h-4 w-4" />
-            View Analytics
-          </Link>
-        </Button>
+        <div className="flex gap-2">
+          <Button asChild size="sm">
+            <Link href="/dashboard/requests/new">
+              <Plus className="mr-1 h-4 w-4" />
+              New Request
+            </Link>
+          </Button>
+          <Button asChild size="sm" variant="outline">
+            <Link href="/dashboard/analytics">
+              <BarChart3 className="mr-1 h-4 w-4" />
+              View Analytics
+            </Link>
+          </Button>
+        </div>
       </div>
 
       {/* Stats */}
@@ -181,5 +190,5 @@ export function AdminDashboard() {
         </CardContent>
       </Card>
     </div>
-  )
+  );
 }

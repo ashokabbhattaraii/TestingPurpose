@@ -1,11 +1,11 @@
-"use client"
+"use client";
 
-import { useAuth } from "@/lib/auth-context"
-import { useServiceRequests, useAnnouncements } from "@/lib/queries"
-import { Card, CardContent, CardHeader, CardTitle } from "@/components/ui/card"
-import { Button } from "@/components/ui/button"
-import { Skeleton } from "@/components/ui/skeleton"
-import { StatusBadge } from "@/components/status-badge"
+import { useAuth } from "@/lib/auth-context";
+import { useServiceRequests, useAnnouncements } from "@/lib/queries";
+import { Card, CardContent, CardHeader, CardTitle } from "@/components/ui/card";
+import { Button } from "@/components/ui/button";
+import { Skeleton } from "@/components/ui/skeleton";
+import { StatusBadge } from "@/components/status-badge";
 import {
   ClipboardList,
   Clock,
@@ -13,26 +13,26 @@ import {
   AlertCircle,
   Plus,
   Megaphone,
-} from "lucide-react"
-import Link from "next/link"
-import { format } from "date-fns"
+} from "lucide-react";
+import Link from "next/link";
+import { format } from "date-fns";
 
 export function EmployeeDashboard() {
-  const { user } = useAuth()
+  const { user } = useAuth();
   const { data: requests, isLoading: reqLoading } = useServiceRequests(
-    user?.id
-  )
-  const { data: announcements, isLoading: annLoading } = useAnnouncements()
+    user?.id,
+  );
+  const { data: announcements, isLoading: annLoading } = useAnnouncements();
 
-  const pending = requests?.filter((r) => r.status === "pending").length ?? 0
+  const pending = requests?.filter((r) => r.status === "pending").length ?? 0;
   const inProgress =
-    requests?.filter((r) => r.status === "in-progress").length ?? 0
-  const resolved = requests?.filter((r) => r.status === "resolved").length ?? 0
-  const total = requests?.length ?? 0
+    requests?.filter((r) => r.status === "in-progress").length ?? 0;
+  const resolved = requests?.filter((r) => r.status === "resolved").length ?? 0;
+  const total = requests?.length ?? 0;
 
-  const recentRequests = requests?.slice(0, 5) ?? []
+  const recentRequests = requests?.slice(0, 5) ?? [];
   const pinnedAnnouncements =
-    announcements?.filter((a) => a.pinned).slice(0, 2) ?? []
+    announcements?.filter((a) => a.pinned).slice(0, 2) ?? [];
 
   return (
     <div className="flex flex-col gap-6">
@@ -46,12 +46,12 @@ export function EmployeeDashboard() {
           </p>
         </div>
         <div className="flex gap-2">
-          <Button asChild size="sm">
-            <Link href="/dashboard/requests/new">
-              <Plus className="mr-1 h-4 w-4" />
-              Request Supplies
-            </Link>
-          </Button>
+          <Link href="/dashboard/requests">
+            <Button className="w-full justify-start gap-2">
+              <Plus className="h-4 w-4" />
+              New Request
+            </Button>
+          </Link>
         </div>
       </div>
 
@@ -222,5 +222,5 @@ export function EmployeeDashboard() {
         </Card>
       </div>
     </div>
-  )
+  );
 }
