@@ -29,7 +29,6 @@ import {
     ExternalLink,
     Settings,
     ChevronLeft,
-    PanelLeft,
   } from "lucide-react"
 import Link from "next/link"
 import type { ReactNode } from "react"
@@ -426,13 +425,14 @@ export function DashboardShell({ children }: { children: ReactNode }) {
       <div className="flex flex-1 flex-col overflow-hidden">
         {/* Top bar */}
         <header className="flex h-14 items-center justify-between border-b border-border bg-card px-4 lg:px-6">
-          <div className="flex items-center gap-3">
+          <div className="flex items-center gap-2">
             <Sheet open={mobileOpen} onOpenChange={setMobileOpen}>
               <SheetTrigger asChild>
                 <Button
                   variant="ghost"
                   size="icon"
-                  className="lg:hidden text-foreground"
+                  className="lg:hidden text-foreground h-9 w-9"
+                  title="Toggle menu"
                 >
                   <Menu className="h-5 w-5" />
                   <span className="sr-only">Toggle menu</span>
@@ -445,7 +445,7 @@ export function DashboardShell({ children }: { children: ReactNode }) {
                 <SidebarContent onLinkClick={() => setMobileOpen(false)} />
               </SheetContent>
             </Sheet>
-            <h1 className="text-sm font-medium text-foreground lg:hidden">
+            <h1 className="text-sm font-medium text-foreground lg:hidden ml-2">
               WorkOps
             </h1>
           </div>
