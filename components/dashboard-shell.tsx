@@ -28,6 +28,8 @@ import {
     Bell,
     ExternalLink,
     Settings,
+    ChevronLeft,
+    PanelLeft,
   } from "lucide-react"
 import Link from "next/link"
 import type { ReactNode } from "react"
@@ -227,12 +229,40 @@ function NotificationPopover({ userId }: { userId: string }) {
   )
 }
 
-function SidebarContent({ onLinkClick }: { onLinkClick?: () => void }) {
+function SidebarContent({ onLinkClick, collapsed }: { onLinkClick?: () => void; collapsed?: boolean }) {
   const { user } = useAuth()
   const pathname = usePathname()
   const filteredItems = navItems.filter((item) =>
     item.roles.includes(user?.role || "")
   )
+
+  if (collapsed) {
+    return (
+      <nav className="flex-1 overflow-y-auto p-2">
+        <div className="flex flex-col gap-2">
+          {filteredItems.map((item) => {
+            const isActive = pathname === item.href
+            return (
+              <Link
+                key={item.href}
+                href={item.href}
+                onClick={onLinkClick}
+                title={item.label}
+                className={cn(
+                  "flex h-10 w-10 items-center justify-center rounded-lg transition-all duration-200 flex-shrink-0",
+                  isActive
+                    ? "bg-sidebar-accent text-sidebar-accent-foreground shadow-sm"
+                    : "text-sidebar-foreground/70 hover:bg-sidebar-accent/50 hover:text-sidebar-accent-foreground"
+                )}
+              >
+                {item.icon}
+              </Link>
+            )
+          })}
+        </div>
+      </nav>
+    )
+  }
 
   return (
     <div className="flex h-full flex-col">
@@ -299,6 +329,7 @@ export function DashboardShell({ children }: { children: ReactNode }) {
   const { user, isAuthenticated, logout } = useAuth()
   const router = useRouter()
   const [mobileOpen, setMobileOpen] = useState(false)
+  const [sidebarCollapsed, setSidebarCollapsed] = useState(false)
 
   useEffect(() => {
     if (!isAuthenticated) {
@@ -313,8 +344,82 @@ export function DashboardShell({ children }: { children: ReactNode }) {
   return (
     <div className="flex h-screen overflow-hidden">
       {/* Desktop Sidebar */}
-      <aside className="hidden w-56 flex-shrink-0 border-r border-sidebar-border bg-sidebar lg:flex lg:flex-col">
-        <SidebarContent />
+      <aside 
+        className={cn(
+          "hidden border-r border-sidebar-border bg-sidebar transition-all duration-300 ease-in-out lg:flex lg:flex-col flex-shrink-0",
+          sidebarCollapsed ? "w-20" : "w-56"
+        )}
+      >
+        <div className="flex h-full flex-col">
+          {/* Sidebar Header with Toggle */}
+          <div className="flex h-14 items-center justify-between border-b border-sidebar-border px-4">
+            {!sidebarCollapsed && (
+              <div className="flex items-center gap-2">
+                <div className="flex h-8 w-8 items-center justify-center rounded-md bg-sidebar-primary">
+                  <Building2 className="h-4 w-4 text-sidebar-primary-foreground" />
+                </div>
+                <span className="text-sm font-semibold text-sidebar-foreground">
+                  WorkOps
+                </span>
+              </div>
+            )}
+            {sidebarCollapsed && (
+              <div className="flex h-8 w-8 items-center justify-center rounded-md bg-sidebar-primary mx-auto">
+                <Building2 className="h-4 w-4 text-sidebar-primary-foreground" />
+              </div>
+            )}
+            <Button
+              variant="ghost"
+              size="icon"
+              onClick={() => setSidebarCollapsed(!sidebarCollapsed)}
+              className="h-8 w-8 text-sidebar-foreground hover:bg-sidebar-accent/50 flex-shrink-0"
+              title={sidebarCollapsed ? "Expand sidebar" : "Collapse sidebar"}
+            >
+              {sidebarCollapsed ? (
+                <ChevronRight className="h-4 w-4" />
+              ) : (
+                <ChevronLeft className="h-4 w-4" />
+              )}
+            </Button>
+          </div>
+
+          {/* Sidebar Content */}
+          <SidebarContent collapsed={sidebarCollapsed} />
+
+          {/* Collapsed Footer */}
+          {sidebarCollapsed && (
+            <div className="border-t border-sidebar-border p-2">
+              <div className="flex items-center justify-center">
+                <Avatar className="h-8 w-8">
+                  <AvatarFallback className="bg-sidebar-primary text-sidebar-primary-foreground text-xs font-semibold">
+                    {getInitials(user?.name || "U")}
+                  </AvatarFallback>
+                </Avatar>
+              </div>
+            </div>
+          )}
+
+          {/* Expanded Footer */}
+          {!sidebarCollapsed && (
+            <div className="border-t border-sidebar-border p-3">
+              <div className="flex items-center gap-3 rounded-lg px-3 py-2">
+                <Avatar className="h-8 w-8">
+                  <AvatarFallback className="bg-sidebar-primary text-sidebar-primary-foreground text-xs font-semibold">
+                    {getInitials(user?.name || "U")}
+                  </AvatarFallback>
+                </Avatar>
+                <div className="flex flex-col min-w-0">
+                  <span className="text-xs font-semibold text-sidebar-foreground truncate">
+                    {user?.name}
+                  </span>
+                  <span className="text-[10px] text-sidebar-foreground/50 truncate">
+                    {getRoleLabel(user?.role || "")}
+                  </span>
+                </div>
+              </div>
+            </div>
+          )}
+        </div>
       </aside>
 
       {/* Main content */}
