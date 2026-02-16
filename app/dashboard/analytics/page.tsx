@@ -20,6 +20,13 @@ import {
   DialogTitle,
 } from "@/components/ui/dialog";
 import {
+  DropdownMenu,
+  DropdownMenuContent,
+  DropdownMenuItem,
+  DropdownMenuTrigger,
+} from "@/components/ui/dropdown-menu";
+import { Input } from "@/components/ui/input";
+import {
   ClipboardList,
   Clock,
   CheckCircle2,
@@ -29,6 +36,13 @@ import {
   X,
   TrendingUp,
   ArrowUpRight,
+  Download,
+  FileSpreadsheet,
+  FileJson,
+  FileText,
+  Search,
+  ChevronLeft,
+  ChevronRight,
 } from "lucide-react";
 import {
   BarChart,
@@ -209,6 +223,34 @@ export default function AnalyticsPage() {
     }
   }, [drillDown, allRequests, timePeriod, categoryFilter, statusFilter]);
 
+  // Drill-down pagination & search
+  const DRILLDOWN_PAGE_SIZE = 10;
+  const [ddPage, setDdPage] = useState(1);
+  const [ddSearch, setDdSearch] = useState("");
+
+  // Reset drill-down pagination when drill-down changes
+  useEffect(() => {
+    setDdPage(1);
+    setDdSearch("");
+  }, [drillDown]);
+
+  const filteredDrillDown = useMemo(() => {
+    if (!ddSearch.trim()) return drillDownRequests;
+    const q = ddSearch.toLowerCase();
+    return drillDownRequests.filter(
+      (r) =>
+        r.title.toLowerCase().includes(q) ||
+        r.id.toLowerCase().includes(q) ||
+        r.createdByName.toLowerCase().includes(q)
+    );
+  }, [drillDownRequests, ddSearch]);
+
+  const ddTotalPages = Math.ceil(filteredDrillDown.length / DRILLDOWN_PAGE_SIZE);
+  const paginatedDrillDown = filteredDrillDown.slice(
+    (ddPage - 1) * DRILLDOWN_PAGE_SIZE,
+    ddPage * DRILLDOWN_PAGE_SIZE
+  );
+
   const activeFilterCount = [
     timePeriod !== "all" ? 1 : 0,
     categoryFilter !== "all" ? 1 : 0,
@@ -220,6 +262,68 @@ export default function AnalyticsPage() {
     setCategoryFilter("all");
     setStatusFilter("all");
   };
+
+  // Export helpers
+  const exportCSV = (data: ServiceRequest[], filename: string) => {
+    const headers = ["ID", "Title", "Category", "Status", "Priority", "Created By", "Assigned To", "Created At", "Updated At"];
+    const rows = data.map((r) => [
+      r.id,
+      `"${r.title.replace(/"/g, '""')}"`,
+      r.category,
+      r.status,
+      r.priority,
+      r.createdByName,
+      r.assignedToName ?? "",
+      format(parseISO(r.createdAt), "yyyy-MM-dd HH:mm"),
+      format(parseISO(r.updatedAt), "yyyy-MM-dd HH:mm"),
+    ]);
+    const csv = [headers.join(","), ...rows.map((r) => r.join(","))].join("\n");
+    downloadFile(csv, `${filename}.csv`, "text/csv");
+  };
+
+  const exportJSON = (data: ServiceRequest[], filename: string) => {
+    const json = JSON.stringify(data, null, 2);
+    downloadFile(json, `${filename}.json`, "application/json");
+  };
+
+  const exportSummaryTXT = (filename: string) => {
+    const lines = [
+      `Analytics Report - ${getTimePeriodLabel(timePeriod)}`,
+      `Generated: ${format(new Date(), "MMM d, yyyy HH:mm")}`,
+      "",
+      "--- Summary ---",
+      `Total Requests: ${analytics.totalRequests}`,
+      `Pending: ${analytics.pendingRequests}`,
+      `In Progress: ${analytics.inProgressRequests}`,
+      `On Hold: ${analytics.onHoldRequests}`,
+      `Resolved: ${analytics.resolvedRequests}`,
+      `Avg Resolution Time: ${analytics.avgResolutionTimeHours}h`,
+      "",
+      "--- By Category ---",
+      ...analytics.requestsByCategory.map((c) => `  ${c.category}: ${c.count}`),
+      "",
+      "--- By Month ---",
+      ...analytics.requestsByMonth.map((m) => `  ${m.month}: ${m.count}`),
+      "",
+      "--- By Status ---",
+      ...analytics.requestsByStatus.map((s) => `  ${s.status}: ${s.count}`),
+    ];
+    downloadFile(lines.join("\n"), `${filename}.txt`, "text/plain");
+  };
+
+  const downloadFile = (content: string, filename: string, mimeType: string) => {
+    const blob = new Blob([content], { type: mimeType });
+    const url = URL.createObjectURL(blob);
+    const a = document.createElement("a");
+    a.href = url;
+    a.download = filename;
+    document.body.appendChild(a);
+    a.click();
+    document.body.removeChild(a);
+    URL.revokeObjectURL(url);
+  };
+
+  const exportFilename = `analytics-${timePeriod}-${format(new Date(), "yyyyMMdd")}`;
 
   if (user?.role === "employee") return null;
 
@@ -233,6 +337,28 @@ export default function AnalyticsPage() {
             Resolution metrics and request distribution.
           </p>
         </div>
+        <DropdownMenu>
+          <DropdownMenuTrigger asChild>
+            <Button variant="outline" size="sm" className="gap-2">
+              <Download className="h-4 w-4" />
+              Export
+            </Button>
+          </DropdownMenuTrigger>
+          <DropdownMenuContent align="end" className="w-52">
+            <DropdownMenuItem onClick={() => exportCSV(filteredRequests, exportFilename)} className="gap-2 cursor-pointer">
+              <FileSpreadsheet className="h-4 w-4 text-emerald-600" />
+              Export as CSV
+            </DropdownMenuItem>
+            <DropdownMenuItem onClick={() => exportJSON(filteredRequests, exportFilename)} className="gap-2 cursor-pointer">
+              <FileJson className="h-4 w-4 text-blue-600" />
+              Export as JSON
+            </DropdownMenuItem>
+            <DropdownMenuItem onClick={() => exportSummaryTXT(exportFilename)} className="gap-2 cursor-pointer">
+              <FileText className="h-4 w-4 text-orange-600" />
+              Export Summary (TXT)
+            </DropdownMenuItem>
+          </DropdownMenuContent>
+        </DropdownMenu>
       </div>
 
       {/* Filters */}
@@ -545,24 +671,59 @@ export default function AnalyticsPage() {
 
       {/* Drill-Down Dialog */}
       <Dialog open={drillDown !== null} onOpenChange={(open) => { if (!open) setDrillDown(null); }}>
-        <DialogContent className="max-w-2xl max-h-[80vh] overflow-hidden flex flex-col">
+        <DialogContent className="max-w-2xl max-h-[85vh] overflow-hidden flex flex-col">
           <DialogHeader>
             <DialogTitle className="flex items-center gap-2 text-base">
               <ArrowUpRight className="h-4 w-4 text-primary" />
               {drillDown?.label}
               <Badge variant="secondary" className="ml-1 text-xs">
-                {drillDownRequests.length} request{drillDownRequests.length !== 1 ? "s" : ""}
+                {filteredDrillDown.length} request{filteredDrillDown.length !== 1 ? "s" : ""}
               </Badge>
             </DialogTitle>
           </DialogHeader>
+
+          {/* Search + export for drill-down */}
+          {drillDownRequests.length > 0 && (
+            <div className="flex items-center gap-2">
+              <div className="relative flex-1">
+                <Search className="absolute left-2.5 top-1/2 h-3.5 w-3.5 -translate-y-1/2 text-muted-foreground" />
+                <Input
+                  placeholder="Search by title, ID, or author..."
+                  value={ddSearch}
+                  onChange={(e) => { setDdSearch(e.target.value); setDdPage(1); }}
+                  className="h-8 pl-8 text-xs"
+                />
+              </div>
+              <DropdownMenu>
+                <DropdownMenuTrigger asChild>
+                  <Button variant="outline" size="sm" className="h-8 gap-1.5 text-xs shrink-0">
+                    <Download className="h-3.5 w-3.5" />
+                    Export
+                  </Button>
+                </DropdownMenuTrigger>
+                <DropdownMenuContent align="end" className="w-44">
+                  <DropdownMenuItem onClick={() => exportCSV(filteredDrillDown, `drilldown-${drillDown?.filterValue ?? "data"}`)} className="gap-2 cursor-pointer text-xs">
+                    <FileSpreadsheet className="h-3.5 w-3.5 text-emerald-600" />
+                    CSV
+                  </DropdownMenuItem>
+                  <DropdownMenuItem onClick={() => exportJSON(filteredDrillDown, `drilldown-${drillDown?.filterValue ?? "data"}`)} className="gap-2 cursor-pointer text-xs">
+                    <FileJson className="h-3.5 w-3.5 text-blue-600" />
+                    JSON
+                  </DropdownMenuItem>
+                </DropdownMenuContent>
+              </DropdownMenu>
+            </div>
+          )}
+
+          {/* Requests list */}
           <div className="flex-1 overflow-y-auto -mx-6 px-6">
-            {drillDownRequests.length === 0 ? (
+            {filteredDrillDown.length === 0 ? (
               <div className="py-8 text-center text-sm text-muted-foreground">
-                No requests found.
+                {ddSearch ? "No matching requests found." : "No requests found."}
               </div>
             ) : (
-              <div className="flex flex-col gap-2 pb-4">
-                {drillDownRequests.map((req) => (
+              <div className="flex flex-col gap-2 pb-2">
+                {paginatedDrillDown.map((req) => (
                   <button
                     key={req.id}
                     onClick={() => {
@@ -579,7 +740,7 @@ export default function AnalyticsPage() {
                       <span className="text-sm font-medium text-foreground">{req.title}</span>
                       <span className="text-xs text-muted-foreground">by {req.createdByName}</span>
                     </div>
-                    <div className="flex items-center gap-3">
+                    <div className="flex items-center gap-3 shrink-0">
                       <span className="text-xs text-muted-foreground">
                         {format(parseISO(req.createdAt), "MMM d, yyyy")}
                       </span>
@@ -590,6 +751,58 @@ export default function AnalyticsPage() {
               </div>
             )}
           </div>
+
+          {/* Drill-down pagination */}
+          {ddTotalPages > 1 && (
+            <div className="flex items-center justify-between border-t pt-3 -mx-6 px-6">
+              <p className="text-xs text-muted-foreground">
+                {(ddPage - 1) * DRILLDOWN_PAGE_SIZE + 1}-{Math.min(ddPage * DRILLDOWN_PAGE_SIZE, filteredDrillDown.length)} of {filteredDrillDown.length}
+              </p>
+              <div className="flex items-center gap-1.5">
+                <Button
+                  variant="outline"
+                  size="sm"
+                  className="h-7 w-7 p-0"
+                  onClick={() => setDdPage((p) => Math.max(1, p - 1))}
+                  disabled={ddPage === 1}
+                >
+                  <ChevronLeft className="h-3.5 w-3.5" />
+                </Button>
+                {Array.from({ length: Math.min(ddTotalPages, 5) }, (_, i) => {
+                  let page: number;
+                  if (ddTotalPages <= 5) {
+                    page = i + 1;
+                  } else if (ddPage <= 3) {
+                    page = i + 1;
+                  } else if (ddPage >= ddTotalPages - 2) {
+                    page = ddTotalPages - 4 + i;
+                  } else {
+                    page = ddPage - 2 + i;
+                  }
+                  return (
+                    <Button
+                      key={page}
+                      variant={ddPage === page ? "default" : "outline"}
+                      size="sm"
+                      className="h-7 w-7 p-0 text-xs"
+                      onClick={() => setDdPage(page)}
+                    >
+                      {page}
+                    </Button>
+                  );
+                })}
+                <Button
+                  variant="outline"
+                  size="sm"
+                  className="h-7 w-7 p-0"
+                  onClick={() => setDdPage((p) => Math.min(ddTotalPages, p + 1))}
+                  disabled={ddPage === ddTotalPages}
+                >
+                  <ChevronRight className="h-3.5 w-3.5" />
+                </Button>
+              </div>
+            </div>
+          )}
         </DialogContent>
       </Dialog>
     </div>
