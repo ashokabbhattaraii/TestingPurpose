@@ -262,98 +262,158 @@ function SidebarNav({ onLinkClick, collapsed, badges }: { onLinkClick?: () => vo
     sectionMap.get(sec)!.push(item)
   }
 
+  const isSettingsActive = pathname === "/dashboard/settings"
+
   if (collapsed) {
     return (
       <TooltipProvider delayDuration={0}>
-        <nav className="flex-1 overflow-y-auto py-3 px-2">
-          <div className="flex flex-col gap-1.5 items-center">
-            {filteredItems.map((item) => {
-              const isActive = pathname === item.href
-              const badgeCount = item.badgeKey ? (badges?.[item.badgeKey] ?? 0) : 0
-              return (
-                <Tooltip key={item.href}>
-                  <TooltipTrigger asChild>
-                    <Link
-                      href={item.href}
-                      onClick={onLinkClick}
-                      className={cn(
-                        "relative flex h-10 w-10 items-center justify-center rounded-lg transition-all duration-200 flex-shrink-0",
-                        isActive
-                          ? "bg-sidebar-primary text-sidebar-primary-foreground shadow-md"
-                          : "text-sidebar-foreground/60 hover:bg-sidebar-accent hover:text-sidebar-accent-foreground"
-                      )}
-                    >
-                      {item.icon}
-                      {badgeCount > 0 && (
-                        <span className="absolute -right-1 -top-1 flex h-4 w-4 items-center justify-center rounded-full bg-orange-500 text-[9px] font-bold text-white">
-                          {badgeCount > 9 ? "9+" : badgeCount}
-                        </span>
-                      )}
-                    </Link>
-                  </TooltipTrigger>
-                  <TooltipContent side="right" className="text-xs">
-                    {item.label}
-                    {badgeCount > 0 && ` (${badgeCount})`}
-                  </TooltipContent>
-                </Tooltip>
-              )
-            })}
+        <div className="flex flex-1 flex-col">
+          <nav className="py-3 px-2">
+            <div className="flex flex-col gap-1.5 items-center">
+              {filteredItems.map((item) => {
+                const isActive = pathname === item.href
+                const badgeCount = item.badgeKey ? (badges?.[item.badgeKey] ?? 0) : 0
+                return (
+                  <Tooltip key={item.href}>
+                    <TooltipTrigger asChild>
+                      <Link
+                        href={item.href}
+                        onClick={onLinkClick}
+                        className={cn(
+                          "relative flex h-10 w-10 items-center justify-center rounded-lg transition-all duration-200 flex-shrink-0",
+                          isActive
+                            ? "bg-sidebar-primary text-sidebar-primary-foreground shadow-md"
+                            : "text-sidebar-foreground/60 hover:bg-sidebar-accent hover:text-sidebar-accent-foreground"
+                        )}
+                      >
+                        {item.icon}
+                        {badgeCount > 0 && (
+                          <span className="absolute -right-1 -top-1 flex h-4 w-4 items-center justify-center rounded-full bg-orange-500 text-[9px] font-bold text-white">
+                            {badgeCount > 9 ? "9+" : badgeCount}
+                          </span>
+                        )}
+                      </Link>
+                    </TooltipTrigger>
+                    <TooltipContent side="right" className="text-xs">
+                      {item.label}
+                      {badgeCount > 0 && ` (${badgeCount})`}
+                    </TooltipContent>
+                  </Tooltip>
+                )
+              })}
+            </div>
+          </nav>
+
+          <div className="flex-1" />
+
+          {/* Settings pinned to bottom */}
+          <div className="px-2 pb-3">
+            <Tooltip>
+              <TooltipTrigger asChild>
+                <Link
+                  href="/dashboard/settings"
+                  onClick={onLinkClick}
+                  className={cn(
+                    "flex h-10 w-10 items-center justify-center rounded-lg transition-all duration-200 mx-auto",
+                    isSettingsActive
+                      ? "bg-sidebar-primary text-sidebar-primary-foreground shadow-md"
+                      : "text-sidebar-foreground/60 hover:bg-sidebar-accent hover:text-sidebar-accent-foreground"
+                  )}
+                >
+                  <Settings className="h-4 w-4" />
+                </Link>
+              </TooltipTrigger>
+              <TooltipContent side="right" className="text-xs">
+                Settings
+              </TooltipContent>
+            </Tooltip>
           </div>
-        </nav>
+        </div>
       </TooltipProvider>
     )
   }
 
   return (
-    <nav className="flex-1 overflow-y-auto py-3 px-3">
-      <div className="flex flex-col gap-5">
-        {sections.map((section) => (
-          <div key={section.label} className="flex flex-col gap-1">
-            <span className="mb-1 px-3 text-[10px] font-semibold uppercase tracking-wider text-sidebar-foreground/40">
-              {section.label}
-            </span>
-            {section.items.map((item) => {
-              const isActive = pathname === item.href
-              const badgeCount = item.badgeKey ? (badges?.[item.badgeKey] ?? 0) : 0
-              return (
-                <Link
-                  key={item.href}
-                  href={item.href}
-                  onClick={onLinkClick}
-                  className={cn(
-                    "group flex items-center gap-3 rounded-lg px-3 py-2 text-sm font-medium transition-all duration-200",
-                    isActive
-                      ? "bg-sidebar-primary text-sidebar-primary-foreground shadow-md"
-                      : "text-sidebar-foreground/60 hover:bg-sidebar-accent hover:text-sidebar-accent-foreground"
-                  )}
-                >
-                  <span className={cn(
-                    "flex h-5 w-5 items-center justify-center flex-shrink-0 transition-colors",
-                    isActive ? "text-sidebar-primary-foreground" : "text-sidebar-foreground/50 group-hover:text-sidebar-accent-foreground"
-                  )}>
-                    {item.icon}
-                  </span>
-                  <span className="flex-1 truncate">{item.label}</span>
-                  {badgeCount > 0 && (
-                    <span className={cn(
-                      "flex h-5 min-w-[20px] items-center justify-center rounded-full px-1.5 text-[10px] font-bold",
+    <div className="flex flex-1 flex-col overflow-y-auto">
+      <nav className="py-4 px-3">
+        <div className="flex flex-col gap-6">
+          {sections.map((section) => (
+            <div key={section.label} className="flex flex-col gap-1">
+              <span className="mb-1 px-3 text-[10px] font-semibold uppercase tracking-wider text-sidebar-foreground/40">
+                {section.label}
+              </span>
+              {section.items.map((item) => {
+                const isActive = pathname === item.href
+                const badgeCount = item.badgeKey ? (badges?.[item.badgeKey] ?? 0) : 0
+                return (
+                  <Link
+                    key={item.href}
+                    href={item.href}
+                    onClick={onLinkClick}
+                    className={cn(
+                      "group flex items-center gap-3 rounded-lg px-3 py-2.5 text-sm font-medium transition-all duration-200",
                       isActive
-                        ? "bg-white/20 text-sidebar-primary-foreground"
-                        : "bg-orange-500 text-white"
+                        ? "bg-sidebar-primary text-sidebar-primary-foreground shadow-md"
+                        : "text-sidebar-foreground/60 hover:bg-sidebar-accent hover:text-sidebar-accent-foreground"
+                    )}
+                  >
+                    <span className={cn(
+                      "flex h-5 w-5 items-center justify-center flex-shrink-0 transition-colors",
+                      isActive ? "text-sidebar-primary-foreground" : "text-sidebar-foreground/50 group-hover:text-sidebar-accent-foreground"
                     )}>
-                      {badgeCount > 99 ? "99+" : badgeCount}
+                      {item.icon}
                     </span>
-                  )}
-                  {isActive && badgeCount === 0 && (
-                    <ChevronRight className="ml-auto h-4 w-4 opacity-60" />
-                  )}
-                </Link>
-              )
-            })}
-          </div>
-        ))}
+                    <span className="flex-1 truncate">{item.label}</span>
+                    {badgeCount > 0 && (
+                      <span className={cn(
+                        "flex h-5 min-w-[20px] items-center justify-center rounded-full px-1.5 text-[10px] font-bold",
+                        isActive
+                          ? "bg-white/20 text-sidebar-primary-foreground"
+                          : "bg-orange-500 text-white"
+                      )}>
+                        {badgeCount > 99 ? "99+" : badgeCount}
+                      </span>
+                    )}
+                    {isActive && badgeCount === 0 && (
+                      <ChevronRight className="ml-auto h-4 w-4 opacity-60" />
+                    )}
+                  </Link>
+                )
+              })}
+            </div>
+          ))}
+        </div>
+      </nav>
+
+      <div className="flex-1" />
+
+      {/* Settings pinned to bottom */}
+      <div className="px-3 pb-3">
+        <div className="border-t border-sidebar-border pt-3">
+          <Link
+            href="/dashboard/settings"
+            onClick={onLinkClick}
+            className={cn(
+              "group flex items-center gap-3 rounded-lg px-3 py-2.5 text-sm font-medium transition-all duration-200",
+              isSettingsActive
+                ? "bg-sidebar-primary text-sidebar-primary-foreground shadow-md"
+                : "text-sidebar-foreground/60 hover:bg-sidebar-accent hover:text-sidebar-accent-foreground"
+            )}
+          >
+            <span className={cn(
+              "flex h-5 w-5 items-center justify-center flex-shrink-0 transition-colors",
+              isSettingsActive ? "text-sidebar-primary-foreground" : "text-sidebar-foreground/50 group-hover:text-sidebar-accent-foreground"
+            )}>
+              <Settings className="h-4 w-4" />
+            </span>
+            <span className="flex-1 truncate">Settings</span>
+            {isSettingsActive && (
+              <ChevronRight className="ml-auto h-4 w-4 opacity-60" />
+            )}
+          </Link>
+        </div>
       </div>
-    </nav>
+    </div>
   )
 }
 
