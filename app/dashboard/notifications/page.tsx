@@ -1,33 +1,28 @@
 "use client";
 
 import { useAuth } from "@/lib/auth-context";
-import { useNotifications, useMarkNotificationRead, useMarkAllNotificationsRead } from "@/lib/queries";
+import { useNotifications, useMarkNotificationRead } from "@/lib/queries";
 import { Card, CardContent } from "@/components/ui/card";
 import { Skeleton } from "@/components/ui/skeleton";
 import { Bell, BellOff } from "lucide-react";
 import { format } from "date-fns";
 import { useRouter } from "next/navigation";
-import { useEffect } from "react";
 
 export default function NotificationsPage() {
   const { user } = useAuth();
   const router = useRouter();
   const { data: notifications, isLoading } = useNotifications(user?.id, true);
-  const markAllRead = useMarkAllNotificationsRead();
+  const markRead = useMarkNotificationRead();
 
   const unreadCount = notifications?.filter((n) => !n.read).length || 0;
 
-  // Auto-mark all as read when the page is viewed
-  useEffect(() => {
-    if (unreadCount > 0 && user?.id) {
-      markAllRead.mutate(user.id);
+  // Mark as read on click, then navigate to detail
+  const handleNotificationClick = (notif: { id: string; read: boolean; link?: string }) => {
+    if (!notif.read) {
+      markRead.mutate(notif.id);
     }
-  // eslint-disable-next-line react-hooks/exhaustive-deps
-  }, [unreadCount, user?.id]);
-
-  const handleNotificationClick = (link?: string) => {
-    if (link) {
-      router.push(link);
+    if (notif.link) {
+      router.push(notif.link);
     }
   };
 
@@ -67,7 +62,7 @@ export default function NotificationsPage() {
           {notifications.map((notif) => (
             <Card
               key={notif.id}
-              onClick={() => handleNotificationClick(notif.link)}
+              onClick={() => handleNotificationClick(notif)}
               className={`transition-colors ${
                 notif.link ? "cursor-pointer hover:bg-muted/50" : ""
               } ${

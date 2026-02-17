@@ -34,7 +34,7 @@ import {
 import Link from "next/link"
 import type { ReactNode } from "react"
 import { cn } from "@/lib/utils"
-import { useNotifications, useMarkNotificationRead, useMarkAllNotificationsRead } from "@/lib/queries"
+import { useNotifications, useMarkNotificationRead } from "@/lib/queries"
 import { Skeleton } from "@/components/ui/skeleton"
 import { format } from "date-fns"
 import {
@@ -128,20 +128,15 @@ function getRoleLabel(role: string) {
 function NotificationPopover({ userId }: { userId: string }) {
   const router = useRouter()
   const { data: notifications, isLoading } = useNotifications(userId)
-  const markAllRead = useMarkAllNotificationsRead()
+  const markRead = useMarkNotificationRead()
   const [open, setOpen] = useState(false)
   const unreadCount = notifications?.filter((n) => !n.read).length || 0
 
-  // Auto-mark all notifications as read when popover opens
-  const handleOpenChange = (isOpen: boolean) => {
-    setOpen(isOpen)
-    if (isOpen && unreadCount > 0) {
-      markAllRead.mutate(userId)
+  // Click notification to mark as read and navigate to its detail link
+  const handleNotificationClick = (notif: { id: string; read: boolean; link?: string }) => {
+    if (!notif.read) {
+      markRead.mutate(notif.id)
     }
-  }
-
-  // Click notification to navigate to its detail link
-  const handleNotificationClick = (notif: { link?: string }) => {
     if (notif.link) {
       setOpen(false)
       router.push(notif.link)
@@ -149,7 +144,7 @@ function NotificationPopover({ userId }: { userId: string }) {
   }
 
   return (
-    <Popover open={open} onOpenChange={handleOpenChange}>
+    <Popover open={open} onOpenChange={setOpen}>
       <PopoverTrigger asChild>
         <Button
           variant="ghost"
