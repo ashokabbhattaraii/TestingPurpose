@@ -1,7 +1,7 @@
 "use client";
 
 import { useAuth } from "@/lib/auth-context";
-import { useServiceRequests, useAnnouncements } from "@/lib/queries";
+import { useServiceRequests, useAnnouncements, useLunchTokens } from "@/lib/queries";
 import { Card, CardContent, CardHeader, CardTitle } from "@/components/ui/card";
 import { Button } from "@/components/ui/button";
 import { Skeleton } from "@/components/ui/skeleton";
@@ -13,9 +13,30 @@ import {
   AlertCircle,
   Plus,
   Megaphone,
+  UtensilsCrossed,
+  ArrowUp,
+  ArrowRight,
+  ArrowDown,
 } from "lucide-react";
 import Link from "next/link";
 import { format } from "date-fns";
+
+const PRIORITY_CONFIG = {
+  high: { label: "High", icon: ArrowUp, className: "text-red-600 bg-red-50" },
+  medium: { label: "Med", icon: ArrowRight, className: "text-amber-600 bg-amber-50" },
+  low: { label: "Low", icon: ArrowDown, className: "text-emerald-600 bg-emerald-50" },
+} as const;
+
+function PriorityBadge({ priority }: { priority: "low" | "medium" | "high" }) {
+  const config = PRIORITY_CONFIG[priority];
+  const Icon = config.icon;
+  return (
+    <span className={`inline-flex items-center gap-0.5 rounded-full px-1.5 py-0.5 text-[10px] font-semibold ${config.className}`}>
+      <Icon className="h-3 w-3" />
+      {config.label}
+    </span>
+  );
+}
 
 export function EmployeeDashboard() {
   const { user } = useAuth();
@@ -23,6 +44,9 @@ export function EmployeeDashboard() {
     user?.id,
   );
   const { data: announcements, isLoading: annLoading } = useAnnouncements();
+  const today = new Date().toISOString().split("T")[0];
+  const { data: todayTokens, isLoading: tokenLoading } = useLunchTokens(today);
+  const tokenCount = todayTokens?.length ?? 0;
 
   const pending = requests?.filter((r) => r.status === "pending").length ?? 0;
   const inProgress =
@@ -56,9 +80,9 @@ export function EmployeeDashboard() {
       </div>
 
       {/* Stats */}
-      <div className="grid grid-cols-2 gap-3 lg:grid-cols-4">
+      <div className="grid grid-cols-2 gap-3 lg:grid-cols-5">
         {reqLoading ? (
-          Array.from({ length: 4 }).map((_, i) => (
+          Array.from({ length: 5 }).map((_, i) => (
             <Card key={i}>
               <CardContent className="p-4">
                 <Skeleton className="h-16" />
@@ -117,6 +141,21 @@ export function EmployeeDashboard() {
                 </div>
               </CardContent>
             </Card>
+            <Link href="/dashboard/lunch">
+              <Card className="transition-colors hover:bg-muted/30 h-full">
+                <CardContent className="flex items-center gap-3 p-4">
+                  <div className="flex h-10 w-10 items-center justify-center rounded-lg bg-orange-50">
+                    <UtensilsCrossed className="h-5 w-5 text-orange-600" />
+                  </div>
+                  <div>
+                    <p className="text-2xl font-bold text-foreground">
+                      {tokenLoading ? "-" : tokenCount}
+                    </p>
+                    <p className="text-xs text-muted-foreground">{"Today's Tokens"}</p>
+                  </div>
+                </CardContent>
+              </Card>
+            </Link>
           </>
         )}
       </div>
@@ -164,7 +203,10 @@ export function EmployeeDashboard() {
                         {req.id} - {format(new Date(req.createdAt), "MMM d")}
                       </span>
                     </div>
-                    <StatusBadge status={req.status} />
+                    <div className="flex items-center gap-2 shrink-0">
+                      <PriorityBadge priority={req.priority} />
+                      <StatusBadge status={req.status} />
+                    </div>
                   </Link>
                 ))}
               </div>

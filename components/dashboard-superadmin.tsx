@@ -1,6 +1,6 @@
 "use client"
 
-import { useServiceRequests, useUsers, useAnalytics } from "@/lib/queries"
+import { useServiceRequests, useUsers, useAnalytics, useLunchTokens } from "@/lib/queries"
 import { Card, CardContent, CardHeader, CardTitle } from "@/components/ui/card"
 import { Button } from "@/components/ui/button"
 import { Skeleton } from "@/components/ui/skeleton"
@@ -10,6 +10,7 @@ import {
   Clock,
   TrendingUp,
   BarChart3,
+  UtensilsCrossed,
 } from "lucide-react"
 import Link from "next/link"
 import {
@@ -25,6 +26,9 @@ export function SuperadminDashboard() {
   const { data: requests, isLoading: reqLoading } = useServiceRequests()
   const { data: users, isLoading: userLoading } = useUsers()
   const { data: analytics, isLoading: analyticsLoading } = useAnalytics()
+  const today = new Date().toISOString().split("T")[0]
+  const { data: todayTokens, isLoading: tokenLoading } = useLunchTokens(today)
+  const tokenCount = todayTokens?.length ?? 0
 
   const total = requests?.length ?? 0
   const totalUsers = users?.length ?? 0
@@ -58,9 +62,9 @@ export function SuperadminDashboard() {
       </div>
 
       {/* Stats */}
-      <div className="grid grid-cols-2 gap-3 lg:grid-cols-4">
+      <div className="grid grid-cols-2 gap-3 lg:grid-cols-5">
         {reqLoading || userLoading || analyticsLoading ? (
-          Array.from({ length: 4 }).map((_, i) => (
+          Array.from({ length: 5 }).map((_, i) => (
             <Card key={i}>
               <CardContent className="p-4">
                 <Skeleton className="h-16" />
@@ -123,6 +127,21 @@ export function SuperadminDashboard() {
                 </div>
               </CardContent>
             </Card>
+            <Link href="/dashboard/lunch">
+              <Card className="transition-colors hover:bg-muted/30 h-full">
+                <CardContent className="flex items-center gap-3 p-4">
+                  <div className="flex h-10 w-10 items-center justify-center rounded-lg bg-orange-50">
+                    <UtensilsCrossed className="h-5 w-5 text-orange-600" />
+                  </div>
+                  <div>
+                    <p className="text-2xl font-bold text-foreground">
+                      {tokenLoading ? "-" : tokenCount}
+                    </p>
+                    <p className="text-xs text-muted-foreground">{"Today's Tokens"}</p>
+                  </div>
+                </CardContent>
+              </Card>
+            </Link>
           </>
         )}
       </div>

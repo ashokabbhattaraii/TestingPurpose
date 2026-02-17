@@ -14,13 +14,30 @@ import {
   SelectTrigger,
   SelectValue,
 } from "@/components/ui/select";
-import { Plus, Search, ChevronLeft, ChevronRight } from "lucide-react";
+import { Plus, Search, ChevronLeft, ChevronRight, ArrowUp, ArrowRight, ArrowDown } from "lucide-react";
 import Link from "next/link";
 import { format } from "date-fns";
 import { useState } from "react";
 import type { RequestStatus, RequestCategory } from "@/lib/types";
 
 const ITEMS_PER_PAGE = 6;
+
+const PRIORITY_CONFIG = {
+  high: { label: "High", icon: ArrowUp, className: "text-red-600 bg-red-50" },
+  medium: { label: "Med", icon: ArrowRight, className: "text-amber-600 bg-amber-50" },
+  low: { label: "Low", icon: ArrowDown, className: "text-emerald-600 bg-emerald-50" },
+} as const;
+
+function PriorityBadge({ priority }: { priority: "low" | "medium" | "high" }) {
+  const config = PRIORITY_CONFIG[priority];
+  const Icon = config.icon;
+  return (
+    <span className={`inline-flex items-center gap-0.5 rounded-full px-1.5 py-0.5 text-[10px] font-semibold ${config.className}`}>
+      <Icon className="h-3 w-3" />
+      {config.label}
+    </span>
+  );
+}
 
 export default function RequestsPage() {
   const { user } = useAuth();
@@ -168,10 +185,11 @@ export default function RequestsPage() {
                         </span>
                       )}
                     </div>
-                    <div className="flex items-center gap-3">
+                    <div className="flex items-center gap-2 shrink-0">
                       <span className="text-xs text-muted-foreground">
                         {format(new Date(req.createdAt), "MMM d, yyyy")}
                       </span>
+                      <PriorityBadge priority={req.priority} />
                       <StatusBadge status={req.status} />
                     </div>
                   </CardContent>
