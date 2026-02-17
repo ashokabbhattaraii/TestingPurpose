@@ -30,6 +30,7 @@ import {
   ExternalLink,
   Settings,
   PanelLeft,
+  ArrowLeft,
 } from "lucide-react"
 import Link from "next/link"
 import type { ReactNode } from "react"
@@ -447,6 +448,7 @@ function MobileSidebarContent({ onLinkClick, badges }: { onLinkClick?: () => voi
 export function DashboardShell({ children }: { children: ReactNode }) {
   const { user, isAuthenticated, logout } = useAuth()
   const router = useRouter()
+  const pathname = usePathname()
   const [mobileOpen, setMobileOpen] = useState(false)
   const [sidebarCollapsed, setSidebarCollapsed] = useState(false)
 
@@ -573,6 +575,24 @@ export function DashboardShell({ children }: { children: ReactNode }) {
                 <MobileSidebarContent onLinkClick={() => setMobileOpen(false)} badges={badges} />
               </SheetContent>
             </Sheet>
+            {pathname !== "/dashboard" && (
+              <TooltipProvider delayDuration={0}>
+                <Tooltip>
+                  <TooltipTrigger asChild>
+                    <Button
+                      variant="ghost"
+                      size="icon"
+                      onClick={() => router.push("/dashboard")}
+                      className="h-8 w-8 text-muted-foreground hover:text-foreground"
+                    >
+                      <ArrowLeft className="h-4 w-4" />
+                      <span className="sr-only">Back to Dashboard</span>
+                    </Button>
+                  </TooltipTrigger>
+                  <TooltipContent side="bottom">Back to Dashboard</TooltipContent>
+                </Tooltip>
+              </TooltipProvider>
+            )}
             <h1 className="text-sm font-medium text-foreground lg:hidden">
               WorkOps
             </h1>
