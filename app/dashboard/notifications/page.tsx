@@ -1,23 +1,34 @@
 "use client";
 
 import { useAuth } from "@/lib/auth-context";
-import { useNotifications, useMarkNotificationRead } from "@/lib/queries";
-import { Card, CardContent, CardHeader, CardTitle } from "@/components/ui/card";
-import { Button } from "@/components/ui/button";
+import { useNotifications, useMarkNotificationRead, useMarkAllNotificationsRead } from "@/lib/queries";
+import { Card, CardContent } from "@/components/ui/card";
 import { Skeleton } from "@/components/ui/skeleton";
-import { Bell, BellOff, ExternalLink } from "lucide-react";
+import { Bell, BellOff } from "lucide-react";
 import { format } from "date-fns";
-import Link from "next/link";
+import { useRouter } from "next/navigation";
+import { useEffect } from "react";
 
 export default function NotificationsPage() {
   const { user } = useAuth();
-  const { data: notifications, isLoading } = useNotifications(user?.id);
-  const markRead = useMarkNotificationRead();
+  const router = useRouter();
+  const { data: notifications, isLoading } = useNotifications(user?.id, true);
+  const markAllRead = useMarkAllNotificationsRead();
 
   const unreadCount = notifications?.filter((n) => !n.read).length || 0;
 
-  const handleMarkRead = (id: string) => {
-    markRead.mutate(id);
+  // Auto-mark all as read when the page is viewed
+  useEffect(() => {
+    if (unreadCount > 0 && user?.id) {
+      markAllRead.mutate(user.id);
+    }
+  // eslint-disable-next-line react-hooks/exhaustive-deps
+  }, [unreadCount, user?.id]);
+
+  const handleNotificationClick = (link?: string) => {
+    if (link) {
+      router.push(link);
+    }
   };
 
   return (
@@ -56,11 +67,14 @@ export default function NotificationsPage() {
           {notifications.map((notif) => (
             <Card
               key={notif.id}
-              className={
+              onClick={() => handleNotificationClick(notif.link)}
+              className={`transition-colors ${
+                notif.link ? "cursor-pointer hover:bg-muted/50" : ""
+              } ${
                 notif.read
                   ? "border-border"
                   : "border-primary/30 bg-primary/[0.02]"
-              }
+              }`}
             >
               <CardContent className="flex items-start gap-3 p-4">
                 <div
@@ -92,30 +106,9 @@ export default function NotificationsPage() {
                   <p className="text-sm text-muted-foreground mt-0.5">
                     {notif.message}
                   </p>
-                  <div className="flex items-center gap-3 mt-2">
-                    <span className="text-xs text-muted-foreground">
-                      {format(new Date(notif.createdAt), "MMM d, h:mm a")}
-                    </span>
-                    {notif.link && (
-                      <Link
-                        href={notif.link}
-                        className="flex items-center gap-1 text-xs text-primary hover:underline"
-                      >
-                        View Request
-                        <ExternalLink className="h-3 w-3" />
-                      </Link>
-                    )}
-                    {!notif.read && (
-                      <Button
-                        variant="ghost"
-                        size="sm"
-                        className="h-auto px-2 py-0.5 text-xs text-muted-foreground"
-                        onClick={() => handleMarkRead(notif.id)}
-                      >
-                        Mark as read
-                      </Button>
-                    )}
-                  </div>
+                  <span className="text-xs text-muted-foreground mt-2 block">
+                    {format(new Date(notif.createdAt), "MMM d, h:mm a")}
+                  </span>
                 </div>
               </CardContent>
             </Card>

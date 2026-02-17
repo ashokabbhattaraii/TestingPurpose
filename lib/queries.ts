@@ -237,13 +237,16 @@ export function useCollectLunchToken() {
 
 // --- Notification Hooks ---
 
-export function useNotifications(userId?: string) {
+export function useNotifications(userId?: string, includeRead = false) {
   return useQuery({
-    queryKey: ["notifications", userId],
+    queryKey: ["notifications", userId, includeRead],
     queryFn: () => {
-      const filtered = userId
-        ? notifications.filter((n) => n.userId === userId && !n.read)
-        : notifications.filter((n) => !n.read);
+      let filtered = userId
+        ? notifications.filter((n) => n.userId === userId)
+        : [...notifications];
+      if (!includeRead) {
+        filtered = filtered.filter((n) => !n.read);
+      }
       return delay([...filtered]);
     },
   });
@@ -258,6 +261,23 @@ export function useMarkNotificationRead() {
         notif.read = true;
       }
       return delay(notif);
+    },
+    onSuccess: () => {
+      queryClient.invalidateQueries({ queryKey: ["notifications"] });
+    },
+  });
+}
+
+export function useMarkAllNotificationsRead() {
+  const queryClient = useQueryClient();
+  return useMutation({
+    mutationFn: (userId: string) => {
+      notifications.forEach((n) => {
+        if (n.userId === userId && !n.read) {
+          n.read = true;
+        }
+      });
+      return delay(null);
     },
     onSuccess: () => {
       queryClient.invalidateQueries({ queryKey: ["notifications"] });
