@@ -86,6 +86,46 @@ export function useCreateRequest() {
   });
 }
 
+export function useUpdateRequest() {
+  const queryClient = useQueryClient();
+  return useMutation({
+    mutationFn: ({
+      id,
+      updates,
+    }: {
+      id: string;
+      updates: Partial<Pick<ServiceRequest, "title" | "description" | "category" | "priority" | "otherCategory">>;
+    }) => {
+      const request = serviceRequests.find((r) => r.id === id);
+      if (!request) throw new Error("Request not found");
+      Object.assign(request, updates, { updatedAt: new Date().toISOString() });
+      return delay(request);
+    },
+    onSuccess: () => {
+      queryClient.invalidateQueries({ queryKey: ["serviceRequests"] });
+      queryClient.invalidateQueries({ queryKey: ["serviceRequest"] });
+      queryClient.invalidateQueries({ queryKey: ["analytics"] });
+    },
+  });
+}
+
+export function useDeleteRequest() {
+  const queryClient = useQueryClient();
+  return useMutation({
+    mutationFn: (id: string) => {
+      const index = serviceRequests.findIndex((r) => r.id === id);
+      if (index === -1) throw new Error("Request not found");
+      serviceRequests.splice(index, 1);
+      return delay({ success: true });
+    },
+    onSuccess: () => {
+      queryClient.invalidateQueries({ queryKey: ["serviceRequests"] });
+      queryClient.invalidateQueries({ queryKey: ["serviceRequest"] });
+      queryClient.invalidateQueries({ queryKey: ["analytics"] });
+    },
+  });
+}
+
 export function useUpdateUserRole() {
   const queryClient = useQueryClient();
   return useMutation({
