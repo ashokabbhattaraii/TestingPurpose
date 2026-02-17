@@ -6,9 +6,24 @@ import { Card, CardContent } from "@/components/ui/card"
 import { Badge } from "@/components/ui/badge"
 import { Skeleton } from "@/components/ui/skeleton"
 import { Button } from "@/components/ui/button"
-import { Megaphone, Pin, X, ChevronLeft, ChevronRight } from "lucide-react"
-import { format } from "date-fns"
+import { Megaphone, Pin, X, ChevronLeft, ChevronRight, Search, CalendarIcon } from "lucide-react"
+import { format, isWithinInterval, startOfDay, endOfDay, isSameDay } from "date-fns"
 import { useState } from "react"
+import {
+  Popover,
+  PopoverContent,
+  PopoverTrigger,
+} from "@/components/ui/popover"
+import { Calendar } from "@/components/ui/calendar"
+import {
+  Select,
+  SelectContent,
+  SelectItem,
+  SelectTrigger,
+  SelectValue,
+} from "@/components/ui/select"
+import type { DateRange } from "react-day-picker"
+import { cn } from "@/lib/utils"
 
 const ITEMS_PER_PAGE = 5;
 import {
@@ -32,15 +47,61 @@ export default function AnnouncementsPage() {
   const [title, setTitle] = useState("")
   const [content, setContent] = useState("")
   const [currentPage, setCurrentPage] = useState(1)
+  const [search, setSearch] = useState("")
+  const [pinnedFilter, setPinnedFilter] = useState<string>("all")
+  const [dateRange, setDateRange] = useState<DateRange | undefined>(undefined)
 
   const canCreate = user?.role === "admin" || user?.role === "superadmin"
 
-  const totalAnnouncements = announcements?.length ?? 0
+  const filtered = announcements?.filter((ann) => {
+    const matchSearch =
+      ann.title.toLowerCase().includes(search.toLowerCase()) ||
+      ann.content.toLowerCase().includes(search.toLowerCase()) ||
+      ann.authorName.toLowerCase().includes(search.toLowerCase())
+    const matchPinned =
+      pinnedFilter === "all" ||
+      (pinnedFilter === "pinned" && ann.pinned) ||
+      (pinnedFilter === "unpinned" && !ann.pinned)
+
+    let matchDate = true
+    if (dateRange?.from) {
+      const annDate = new Date(ann.createdAt)
+      if (dateRange.to) {
+        matchDate = isWithinInterval(annDate, {
+          start: startOfDay(dateRange.from),
+          end: endOfDay(dateRange.to),
+        })
+      } else {
+        matchDate = isSameDay(annDate, dateRange.from)
+      }
+    }
+
+    return matchSearch && matchPinned && matchDate
+  }) ?? []
+
+  const totalAnnouncements = filtered.length
   const totalPages = Math.ceil(totalAnnouncements / ITEMS_PER_PAGE)
-  const paginatedAnnouncements = announcements?.slice(
+  const paginatedAnnouncements = filtered.slice(
     (currentPage - 1) * ITEMS_PER_PAGE,
     currentPage * ITEMS_PER_PAGE
-  ) ?? []
+  )
+
+  const handleSearch = (value: string) => {
+    setSearch(value)
+    setCurrentPage(1)
+  }
+  const handlePinnedFilter = (value: string) => {
+    setPinnedFilter(value)
+    setCurrentPage(1)
+  }
+  const handleDateChange = (range: DateRange | undefined) => {
+    setDateRange(range)
+    setCurrentPage(1)
+  }
+  const clearDateFilter = () => {
+    setDateRange(undefined)
+    setCurrentPage(1)
+  }
 
   const handleCreateAnnouncement = () => {
     if (title.trim() && content.trim() && user) {
@@ -138,18 +199,97 @@ export default function AnnouncementsPage() {
         )}
       </div>
 
+      {/* Search and Filters */}
+      <div className="flex flex-col gap-3 sm:flex-row sm:flex-wrap">
+        <div className="relative flex-1 min-w-0">
+          <Search className="absolute left-3 top-1/2 h-4 w-4 -translate-y-1/2 text-muted-foreground" />
+          <Input
+            placeholder="Search announcements..."
+            value={search}
+            onChange={(e) => handleSearch(e.target.value)}
+            className="pl-9"
+          />
+        </div>
+        <Popover>
+          <PopoverTrigger asChild>
+            <Button
+              variant="outline"
+              className={cn(
+                "w-full sm:w-auto justify-start text-left font-normal gap-2",
+                !dateRange && "text-muted-foreground"
+              )}
+            >
+              <CalendarIcon className="h-4 w-4 shrink-0" />
+              {dateRange?.from ? (
+                dateRange.to ? (
+                  <span className="truncate">
+                    {format(dateRange.from, "MMM d, yyyy")} - {format(dateRange.to, "MMM d, yyyy")}
+                  </span>
+                ) : (
+                  <span className="truncate">{format(dateRange.from, "MMM d, yyyy")}</span>
+                )
+              ) : (
+                <span>Filter by date</span>
+              )}
+              {dateRange?.from && (
+                <span
+                  role="button"
+                  tabIndex={0}
+                  className="ml-auto rounded-full p-0.5 hover:bg-muted"
+                  onClick={(e) => {
+                    e.stopPropagation()
+                    clearDateFilter()
+                  }}
+                  onKeyDown={(e) => {
+                    if (e.key === "Enter" || e.key === " ") {
+                      e.stopPropagation()
+                      clearDateFilter()
+                    }
+                  }}
+                >
+                  <X className="h-3.5 w-3.5" />
+                  <span className="sr-only">Clear date filter</span>
+                </span>
+              )}
+            </Button>
+          </PopoverTrigger>
+          <PopoverContent className="w-auto p-0" align="start">
+            <Calendar
+              initialFocus
+              mode="range"
+              defaultMonth={dateRange?.from}
+              selected={dateRange}
+              onSelect={handleDateChange}
+              numberOfMonths={2}
+            />
+          </PopoverContent>
+        </Popover>
+        <Select value={pinnedFilter} onValueChange={handlePinnedFilter}>
+          <SelectTrigger className="w-full sm:w-40">
+            <SelectValue placeholder="Filter" />
+          </SelectTrigger>
+          <SelectContent>
+            <SelectItem value="all">All</SelectItem>
+            <SelectItem value="pinned">Pinned Only</SelectItem>
+            <SelectItem value="unpinned">Unpinned Only</SelectItem>
+          </SelectContent>
+        </Select>
+      </div>
+
       {isLoading ? (
         <div className="flex flex-col gap-3">
           {Array.from({ length: 4 }).map((_, i) => (
             <Skeleton key={i} className="h-24" />
           ))}
         </div>
-      ) : !announcements || announcements.length === 0 ? (
+      ) : filtered.length === 0 ? (
         <Card>
           <CardContent className="py-12 text-center">
             <Megaphone className="mx-auto mb-3 h-8 w-8 text-muted-foreground" />
             <p className="text-sm text-muted-foreground">
-              No announcements at this time.
+              {search || pinnedFilter !== "all" || dateRange?.from
+                ? "No announcements match your filters."
+                : "No announcements at this time."}
             </p>
           </CardContent>
         </Card>
