@@ -3,6 +3,9 @@ import * as z from "zod";
 // Request validation schema
 export const requestSchema = z
   .object({
+    requestType: z.enum(["issue", "asset-request"] as const, {
+      errorMap: () => ({ message: "Please select a request type" }),
+    }),
     title: z
       .string()
       .min(3, "Title must be at least 3 characters")

@@ -260,6 +260,13 @@ export default function RequestsPage() {
                             ? `- ${req.otherCategory}`
                             : ""}
                         </span>
+                        <span className={`text-[10px] px-1.5 py-0.5 rounded font-medium ${
+                          req.requestType === "asset-request"
+                            ? "bg-blue-100 text-blue-700"
+                            : "bg-orange-100 text-orange-700"
+                        }`}>
+                          {req.requestType === "asset-request" ? "Asset" : "Issue"}
+                        </span>
                       </div>
                       <span className="text-sm font-medium text-foreground">
                         {req.title}

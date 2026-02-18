@@ -38,8 +38,19 @@ export interface User {
   };
 }
 
+export type RequestType = "issue" | "asset-request";
+
+export interface Attachment {
+  id: string;
+  name: string;
+  size: number;
+  type: string;
+  url: string;
+}
+
 export interface ServiceRequest {
   id: string;
+  requestType: RequestType;
   title: string;
   description: string;
   category: RequestCategory;
@@ -50,6 +61,7 @@ export interface ServiceRequest {
   createdByName: string;
   assignedTo?: string;
   assignedToName?: string;
+  attachments?: Attachment[];
   createdAt: string;
   updatedAt: string;
 }

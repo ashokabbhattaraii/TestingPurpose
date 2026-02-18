@@ -137,6 +137,7 @@ export const users: User[] = [
 export const serviceRequests: ServiceRequest[] = [
   {
     id: "SR-001",
+    requestType: "asset-request",
     title: "Restock coffee and tea supplies",
     description:
       "The pantry is running low on coffee beans, tea bags, and sugar packets.",
@@ -150,6 +151,7 @@ export const serviceRequests: ServiceRequest[] = [
   },
   {
     id: "SR-002",
+    requestType: "issue",
     title: "AC not working in meeting room B",
     description:
       "The air conditioning unit in meeting room B is blowing warm air. Needs servicing.",
@@ -165,6 +167,7 @@ export const serviceRequests: ServiceRequest[] = [
   },
   {
     id: "SR-003",
+    requestType: "issue",
     title: "Deep cleaning for 3rd floor",
     description:
       "Requesting a thorough deep cleaning of the 3rd floor workspace area.",
@@ -181,6 +184,7 @@ export const serviceRequests: ServiceRequest[] = [
   },
   {
     id: "SR-004",
+    requestType: "asset-request",
     title: "Refill water dispenser on 2nd floor",
     description: "Water dispenser near the engineering bay is empty.",
     category: "Food and Supplies",
@@ -195,6 +199,7 @@ export const serviceRequests: ServiceRequest[] = [
   },
   {
     id: "SR-005",
+    requestType: "issue",
     title: "Replace broken desk lamp",
     description:
       "The desk lamp at workstation E-12 is flickering and needs replacement.",
@@ -208,6 +213,7 @@ export const serviceRequests: ServiceRequest[] = [
   },
   {
     id: "SR-006",
+    requestType: "asset-request",
     title: "Restock printer paper",
     description: "All printers on the 2nd floor are out of A4 paper.",
     category: "Office Maintenance",
@@ -222,6 +228,7 @@ export const serviceRequests: ServiceRequest[] = [
   },
   {
     id: "SR-007",
+    requestType: "issue",
     title: "Pest control for kitchen area",
     description:
       "Noticed insects in the office kitchen near the storage cabinets.",
@@ -235,6 +242,7 @@ export const serviceRequests: ServiceRequest[] = [
   },
   {
     id: "SR-008",
+    requestType: "asset-request",
     title: "Request for standing desk",
     description: "Would like a standing desk converter for workstation E-05.",
     category: "Office Maintenance",
@@ -247,6 +255,7 @@ export const serviceRequests: ServiceRequest[] = [
   },
   {
     id: "SR-009",
+    requestType: "issue",
     title: "Microwave repair in pantry",
     description:
       "The microwave in the 2nd floor pantry is not heating properly.",
@@ -263,6 +272,7 @@ export const serviceRequests: ServiceRequest[] = [
   },
   {
     id: "SR-010",
+    requestType: "asset-request",
     title: "Restock snacks in ",
     description: "The snack shelf in the main pantry has been empty for days.",
     category: "Food and Supplies",

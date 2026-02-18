@@ -15,6 +15,7 @@ import {
   SelectTrigger,
   SelectValue,
 } from "@/components/ui/select";
+import { RadioGroup, RadioGroupItem } from "@/components/ui/radio-group";
 import { ArrowLeft, Loader } from "lucide-react";
 import Link from "next/link";
 import { toast } from "sonner";
@@ -46,6 +47,7 @@ export default function EditRequestPage() {
   const form = useForm<RequestFormValues>({
     resolver: zodResolver(requestSchema),
     defaultValues: {
+      requestType: request?.requestType || "issue",
       title: request?.title || "",
       description: request?.description || "",
       category: request?.category || "Food and Supplies",
@@ -58,6 +60,7 @@ export default function EditRequestPage() {
   React.useEffect(() => {
     if (request) {
       form.reset({
+        requestType: request.requestType || "issue",
         title: request.title,
         description: request.description,
         category: request.category,
@@ -123,6 +126,7 @@ export default function EditRequestPage() {
     updateRequest.mutate(
       {
         id: request.id,
+        requestType: values.requestType,
         title: values.title,
         description: values.description || "",
         category: values.category,
@@ -171,6 +175,39 @@ export default function EditRequestPage() {
               onSubmit={form.handleSubmit(handleSubmit)}
               className="flex flex-col gap-4"
             >
+              <FormField
+                control={form.control}
+                name="requestType"
+                render={({ field }) => (
+                  <FormItem>
+                    <FormLabel>Request Type *</FormLabel>
+                    <FormControl>
+                      <RadioGroup
+                        onValueChange={field.onChange}
+                        value={field.value}
+                        className="flex gap-4"
+                      >
+                        <label
+                          htmlFor="edit-type-issue"
+                          className="flex cursor-pointer items-center gap-2 rounded-md border border-border px-4 py-2.5 text-sm transition-colors has-[*[data-state=checked]]:border-primary has-[*[data-state=checked]]:bg-primary/5"
+                        >
+                          <RadioGroupItem value="issue" id="edit-type-issue" />
+                          <span className="font-medium text-foreground">Issue</span>
+                        </label>
+                        <label
+                          htmlFor="edit-type-asset"
+                          className="flex cursor-pointer items-center gap-2 rounded-md border border-border px-4 py-2.5 text-sm transition-colors has-[*[data-state=checked]]:border-primary has-[*[data-state=checked]]:bg-primary/5"
+                        >
+                          <RadioGroupItem value="asset-request" id="edit-type-asset" />
+                          <span className="font-medium text-foreground">Asset Request</span>
+                        </label>
+                      </RadioGroup>
+                    </FormControl>
+                    <FormMessage />
+                  </FormItem>
+                )}
+              />
+
               <FormField
                 control={form.control}
                 name="title"
