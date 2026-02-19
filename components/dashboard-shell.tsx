@@ -31,10 +31,13 @@ import {
   Settings,
   PanelLeft,
   ArrowLeft,
+  Moon,
+  Sun,
 } from "lucide-react"
 import Link from "next/link"
 import type { ReactNode } from "react"
 import { cn } from "@/lib/utils"
+import { useTheme } from "next-themes"
 import { useNotifications, useMarkNotificationRead } from "@/lib/queries"
 import { Skeleton } from "@/components/ui/skeleton"
 import { format } from "date-fns"
@@ -124,6 +127,49 @@ function getRoleLabel(role: string) {
     default:
       return "Employee"
   }
+}
+
+function ThemeToggle() {
+  const { theme, setTheme } = useTheme()
+  const [mounted, setMounted] = useState(false)
+
+  useEffect(() => {
+    setMounted(true)
+  }, [])
+
+  if (!mounted) {
+    return (
+      <Button variant="ghost" size="icon" className="text-foreground">
+        <Sun className="h-5 w-5" />
+        <span className="sr-only">Toggle theme</span>
+      </Button>
+    )
+  }
+
+  return (
+    <TooltipProvider delayDuration={0}>
+      <Tooltip>
+        <TooltipTrigger asChild>
+          <Button
+            variant="ghost"
+            size="icon"
+            onClick={() => setTheme(theme === "dark" ? "light" : "dark")}
+            className="text-foreground"
+          >
+            {theme === "dark" ? (
+              <Sun className="h-5 w-5" />
+            ) : (
+              <Moon className="h-5 w-5" />
+            )}
+            <span className="sr-only">Toggle theme</span>
+          </Button>
+        </TooltipTrigger>
+        <TooltipContent side="bottom">
+          {theme === "dark" ? "Switch to light mode" : "Switch to dark mode"}
+        </TooltipContent>
+      </Tooltip>
+    </TooltipProvider>
+  )
 }
 
 function NotificationPopover({ userId }: { userId: string }) {
@@ -599,6 +645,7 @@ export function DashboardShell({ children }: { children: ReactNode }) {
           </div>
 
           <div className="flex items-center gap-2">
+            <ThemeToggle />
             {user && <NotificationPopover userId={user.id} />}
             <DropdownMenu>
               <DropdownMenuTrigger asChild>

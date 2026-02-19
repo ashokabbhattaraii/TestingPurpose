@@ -210,6 +210,7 @@ export default function RequestsPage() {
             <SelectItem value="in-progress">In Progress</SelectItem>
             <SelectItem value="resolved">Resolved</SelectItem>
             <SelectItem value="rejected">Rejected</SelectItem>
+            <SelectItem value="reopened">Reopened</SelectItem>
           </SelectContent>
         </Select>
         <Select value={categoryFilter} onValueChange={handleCategoryFilter}>

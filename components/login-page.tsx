@@ -47,7 +47,7 @@ export function LoginPage() {
   const otherUsers = users.slice(1);
 
   return (
-    <div className="flex min-h-screen items-center justify-center bg-gradient-to-b from-slate-50 via-purple-50/20 to-white px-4 relative">
+    <div className="flex min-h-screen items-center justify-center bg-gradient-to-b from-background via-primary/5 to-background px-4 relative">
       {/* Decorative background elements */}
       <div className="absolute inset-0 -z-10 overflow-hidden pointer-events-none">
         <div className="absolute -top-40 -right-40 w-80 h-80 bg-primary/10 rounded-full blur-3xl" />
@@ -68,14 +68,14 @@ export function LoginPage() {
 
         {/* Main Login Card */}
         <Card className="border-primary/20 shadow-2xl">
-          <CardHeader className="text-center bg-gradient-to-b from-white to-primary/5 rounded-t-lg">
+          <CardHeader className="text-center bg-gradient-to-b from-card to-primary/5 rounded-t-lg">
             <div className="mx-auto mb-4 flex h-14 w-14 items-center justify-center rounded-lg bg-gradient-to-br from-primary to-primary/80 text-white shadow-lg">
               <Building2 className="h-7 w-7" />
             </div>
-            <CardTitle className="text-3xl font-bold bg-gradient-to-r from-slate-900 to-primary bg-clip-text text-transparent">
+            <CardTitle className="text-3xl font-bold bg-gradient-to-r from-foreground to-primary bg-clip-text text-transparent">
               WorkOps
             </CardTitle>
-            <CardDescription className="text-slate-600 mt-2">
+            <CardDescription className="text-muted-foreground mt-2">
               Sign in to the Office Utility Management System
             </CardDescription>
           </CardHeader>
@@ -86,7 +86,7 @@ export function LoginPage() {
                 <button
                   type="button"
                   onClick={() => console.log("Google sign in")}
-                  className="flex w-full items-center justify-center gap-3 rounded-lg border-2 border-slate-200 bg-white py-3 px-4 text-center transition-all hover:border-primary hover:bg-primary/5 hover:shadow-md"
+                  className="flex w-full items-center justify-center gap-3 rounded-lg border-2 border-border bg-card py-3 px-4 text-center transition-all hover:border-primary hover:bg-primary/5 hover:shadow-md"
                 >
                   <svg className="h-5 w-5" viewBox="0 0 24 24">
                     <path
@@ -106,7 +106,7 @@ export function LoginPage() {
                       fill="#EA4335"
                     />
                   </svg>
-                  <span className="font-semibold text-slate-900">
+                  <span className="font-semibold text-foreground">
                     Continue with Google
                   </span>
                 </button>
@@ -115,10 +115,10 @@ export function LoginPage() {
               {/* Divider */}
               <div className="relative">
                 <div className="absolute inset-0 flex items-center">
-                  <div className="w-full border-t border-slate-200" />
+                  <div className="w-full border-t border-border" />
                 </div>
                 <div className="relative flex justify-center text-xs">
-                  <span className="bg-white px-3 text-slate-600 font-medium">
+                  <span className="bg-card px-3 text-muted-foreground font-medium">
                     or use demo account
                   </span>
                 </div>
@@ -127,9 +127,9 @@ export function LoginPage() {
           </CardContent>
 
           {/* Accounts Selection Section at Bottom */}
-          <div className="border-t border-slate-200 bg-gradient-to-b from-white to-slate-50 rounded-b-lg px-6 py-6">
+          <div className="border-t border-border bg-gradient-to-b from-card to-muted/30 rounded-b-lg px-6 py-6">
             <div className="flex flex-col gap-4">
-              <p className="text-sm font-semibold text-slate-900 text-center">
+              <p className="text-sm font-semibold text-foreground text-center">
                 Select an account to continue
               </p>
 
@@ -143,28 +143,28 @@ export function LoginPage() {
                     className={`flex w-full items-center gap-4 rounded-lg border-2 transition-all p-4 text-left hover:shadow-md ${
                       idx === 0
                         ? "border-primary/50 bg-primary/5 hover:border-primary hover:bg-primary/10"
-                        : "border-slate-200 hover:border-primary/40 hover:bg-primary/5"
+                        : "border-border hover:border-primary/40 hover:bg-primary/5"
                     }`}
                   >
                     <Avatar
                       className={`h-10 w-10 flex-shrink-0 border-2 ${
                         idx === 0
                           ? "border-primary/50 bg-primary/10"
-                          : "border-slate-300"
+                          : "border-border"
                       }`}
                     >
                       <AvatarFallback
                         className={`text-xs font-bold ${
                           idx === 0
                             ? "bg-primary/25 text-primary"
-                            : "bg-slate-200 text-slate-700"
+                            : "bg-muted text-muted-foreground"
                         }`}
                       >
                         {getInitials(u.name)}
                       </AvatarFallback>
                     </Avatar>
                     <div className="flex flex-1 flex-col">
-                      <span className="text-sm font-semibold text-slate-900">
+                      <span className="text-sm font-semibold text-foreground">
                         {u.name}
                         {idx === 0 && (
                           <span className="text-primary ml-2 text-xs font-bold">
@@ -172,7 +172,7 @@ export function LoginPage() {
                           </span>
                         )}
                       </span>
-                      <span className="text-xs text-slate-600">{u.email}</span>
+                      <span className="text-xs text-muted-foreground">{u.email}</span>
                     </div>
                     <Badge
                       variant="outline"
@@ -184,7 +184,7 @@ export function LoginPage() {
                 ))}
               </div>
 
-              <p className="text-center text-xs text-slate-600 mt-2">
+              <p className="text-center text-xs text-muted-foreground mt-2">
                 Select any account to sign in. Roles are managed by the Super
                 Admin.
               </p>
@@ -194,7 +194,7 @@ export function LoginPage() {
 
         {/* Footer */}
         <div className="mt-8 text-center">
-          <p className="text-xs text-slate-600">
+          <p className="text-xs text-muted-foreground">
             Don't have an account?{" "}
             <Link
               href="/"

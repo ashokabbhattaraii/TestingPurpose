@@ -26,6 +26,10 @@ const statusConfig: Record<
     label: "Rejected",
     className: "bg-red-100 text-red-800 border-red-200",
   },
+  reopened: {
+    label: "Reopened",
+    className: "bg-purple-100 text-purple-800 border-purple-200",
+  },
 };
 
 export function StatusBadge({ status }: { status: RequestStatus }) {

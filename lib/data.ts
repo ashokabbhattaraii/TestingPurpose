@@ -475,5 +475,6 @@ export const analyticsData: AnalyticsData = {
     { status: "On Hold", count: 2 },
     { status: "Resolved", count: 3 },
     { status: "Rejected", count: 1 },
+  { status: "Reopened", count: 0 },
   ],
 };

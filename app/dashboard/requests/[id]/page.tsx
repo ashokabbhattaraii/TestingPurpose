@@ -7,6 +7,7 @@ import {
   useAssignRequest,
   useUsers,
   useDeleteRequest,
+  useReopenRequest,
 } from "@/lib/queries";
 import { useParams, useRouter } from "next/navigation";
 import { Card, CardContent, CardHeader, CardTitle } from "@/components/ui/card";
@@ -30,7 +31,8 @@ import {
   AlertDialogHeader,
   AlertDialogTitle,
 } from "@/components/ui/alert-dialog";
-import { ArrowLeft, Calendar, User, Tag, Flag, UserPlus, Edit2, Trash2, FileText, ImageIcon, File, Paperclip, ClipboardList } from "lucide-react";
+import { Textarea } from "@/components/ui/textarea";
+import { ArrowLeft, Calendar, User, Tag, Flag, UserPlus, Edit2, Trash2, FileText, ImageIcon, File, Paperclip, ClipboardList, RotateCcw, MessageSquare } from "lucide-react";
 import Link from "next/link";
 import { format } from "date-fns";
 import { useState } from "react";
@@ -53,7 +55,9 @@ export default function RequestDetailPage() {
   const updateStatus = useUpdateRequestStatus();
   const assignRequest = useAssignRequest();
   const deleteRequest = useDeleteRequest();
+  const reopenRequest = useReopenRequest();
   const [newStatus, setNewStatus] = useState<RequestStatus | "">("");
+  const [rejectionComment, setRejectionComment] = useState("");
   const [assignTo, setAssignTo] = useState<string>("");
   const [isDeleteDialogOpen, setIsDeleteDialogOpen] = useState(false);
 
@@ -62,12 +66,33 @@ export default function RequestDetailPage() {
 
   const handleStatusUpdate = () => {
     if (!newStatus || !request) return;
+    if (newStatus === "rejected" && !rejectionComment.trim()) {
+      toast.error("Please provide a reason for rejection.");
+      return;
+    }
     updateStatus.mutate(
-      { id: request.id, status: newStatus },
+      {
+        id: request.id,
+        status: newStatus,
+        ...(newStatus === "rejected" ? { rejectionComment: rejectionComment.trim() } : {}),
+      },
       {
         onSuccess: () => {
           toast.success(`Request status updated to ${newStatus}.`);
           setNewStatus("");
+          setRejectionComment("");
+        },
+      },
+    );
+  };
+
+  const handleReopen = () => {
+    if (!request || !user) return;
+    reopenRequest.mutate(
+      { id: request.id, userId: user.id, userName: user.name },
+      {
+        onSuccess: () => {
+          toast.success("Request has been reopened. Admins have been notified.");
         },
       },
     );
@@ -271,6 +296,45 @@ export default function RequestDetailPage() {
             </div>
           )}
 
+          {/* Rejection Comment Display */}
+          {request.status === "rejected" && request.rejectionComment && (
+            <div className="rounded-md border border-destructive/30 bg-destructive/5 p-4">
+              <div className="flex items-start gap-2">
+                <MessageSquare className="h-4 w-4 text-destructive mt-0.5 shrink-0" />
+                <div className="flex-1 min-w-0">
+                  <p className="text-sm font-medium text-destructive">Rejection Reason</p>
+                  <p className="text-sm text-foreground mt-1 leading-relaxed">
+                    {request.rejectionComment}
+                  </p>
+                </div>
+              </div>
+            </div>
+          )}
+
+          {/* Reopen Button for creator when rejected */}
+          {isCreator && request.status === "rejected" && (
+            <div className="rounded-md border border-border bg-muted/30 p-4">
+              <div className="flex items-center justify-between gap-4">
+                <div className="flex-1 min-w-0">
+                  <p className="text-sm font-medium text-foreground">Not satisfied with the rejection?</p>
+                  <p className="text-xs text-muted-foreground mt-0.5">
+                    You can reopen this request for further review by the admin team.
+                  </p>
+                </div>
+                <Button
+                  onClick={handleReopen}
+                  disabled={reopenRequest.isPending}
+                  size="sm"
+                  variant="outline"
+                  className="shrink-0 gap-1.5"
+                >
+                  <RotateCcw className="h-3.5 w-3.5" />
+                  {reopenRequest.isPending ? "Reopening..." : "Reopen Request"}
+                </Button>
+              </div>
+            </div>
+          )}
+
           {request.assignedToName && (
             <div className="rounded-md border border-border bg-muted/30 p-3">
               <p className="text-xs text-muted-foreground">Assigned to</p>
@@ -287,7 +351,8 @@ export default function RequestDetailPage() {
           {/* Admin: Assign Request */}
           {isAdminOrSuper &&
             request.status !== "resolved" &&
-            request.status !== "rejected" && (
+            request.status !== "rejected" &&
+            request.status !== "reopened" && (
               <div className="flex flex-col gap-3 border-t border-border pt-4">
                 <div className="flex items-center gap-2">
                   <UserPlus className="h-4 w-4 text-muted-foreground" />
@@ -336,7 +401,10 @@ export default function RequestDetailPage() {
                 <div className="flex gap-2">
                   <Select
                     value={newStatus}
-                    onValueChange={(v) => setNewStatus(v as RequestStatus)}
+                    onValueChange={(v) => {
+                      setNewStatus(v as RequestStatus);
+                      if (v !== "rejected") setRejectionComment("");
+                    }}
                   >
                     <SelectTrigger className="flex-1">
                       <SelectValue placeholder="Select new status" />
@@ -350,12 +418,29 @@ export default function RequestDetailPage() {
                   </Select>
                   <Button
                     onClick={handleStatusUpdate}
-                    disabled={!newStatus || updateStatus.isPending}
+                    disabled={!newStatus || updateStatus.isPending || (newStatus === "rejected" && !rejectionComment.trim())}
                     size="sm"
                   >
                     {updateStatus.isPending ? "Updating..." : "Update"}
                   </Button>
                 </div>
+                {newStatus === "rejected" && (
+                  <div className="flex flex-col gap-1.5">
+                    <label htmlFor="rejection-comment" className="text-xs font-medium text-destructive">
+                      Rejection Reason (required)
+                    </label>
+                    <Textarea
+                      id="rejection-comment"
+                      placeholder="Please provide a reason for rejecting this request..."
+                      value={rejectionComment}
+                      onChange={(e) => setRejectionComment(e.target.value)}
+                      className="min-h-[80px] border-destructive/30 focus-visible:ring-destructive"
+                    />
+                    {!rejectionComment.trim() && (
+                      <p className="text-xs text-destructive">A rejection reason is required before updating the status.</p>
+                    )}
+                  </div>
+                )}
               </div>
             )}
         </CardContent>

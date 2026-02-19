@@ -5,7 +5,8 @@ export type RequestStatus =
   | "on-hold"
   | "in-progress"
   | "resolved"
-  | "rejected";
+  | "rejected"
+  | "reopened";
 
 export type RequestCategory =
   | "Food and Supplies"
@@ -62,6 +63,7 @@ export interface ServiceRequest {
   assignedTo?: string;
   assignedToName?: string;
   attachments?: Attachment[];
+  rejectionComment?: string;
   createdAt: string;
   updatedAt: string;
 }

@@ -111,17 +111,55 @@ export function useUpdateUserRole() {
 export function useUpdateRequestStatus() {
   const queryClient = useQueryClient();
   return useMutation({
-    mutationFn: ({ id, status }: { id: string; status: RequestStatus }) => {
+    mutationFn: ({ id, status, rejectionComment }: { id: string; status: RequestStatus; rejectionComment?: string }) => {
       const request = serviceRequests.find((r) => r.id === id);
       if (request) {
         request.status = status;
         request.updatedAt = new Date().toISOString();
+        if (status === "rejected" && rejectionComment) {
+          request.rejectionComment = rejectionComment;
+        }
       }
       return delay(request);
     },
     onSuccess: () => {
       queryClient.invalidateQueries({ queryKey: ["serviceRequests"] });
       queryClient.invalidateQueries({ queryKey: ["serviceRequest"] });
+      queryClient.invalidateQueries({ queryKey: ["analytics"] });
+    },
+  });
+}
+
+export function useReopenRequest() {
+  const queryClient = useQueryClient();
+  return useMutation({
+    mutationFn: ({ id, userId, userName }: { id: string; userId: string; userName: string }) => {
+      const request = serviceRequests.find((r) => r.id === id);
+      if (request) {
+        request.status = "reopened";
+        request.rejectionComment = undefined;
+        request.updatedAt = new Date().toISOString();
+      }
+      // Notify admins that the request was reopened
+      const adminUsers = users.filter((u) => u.role === "admin" || u.role === "superadmin");
+      adminUsers.forEach((admin) => {
+        const notif: Notification = {
+          id: `n-${Date.now()}-${admin.id}`,
+          userId: admin.id,
+          title: "Request Reopened",
+          message: `${userName} reopened request ${id}: ${request?.title || ""}`,
+          read: false,
+          createdAt: new Date().toISOString(),
+          link: `/dashboard/requests/${id}`,
+        };
+        notifications.unshift(notif);
+      });
+      return delay(request);
+    },
+    onSuccess: () => {
+      queryClient.invalidateQueries({ queryKey: ["serviceRequests"] });
+      queryClient.invalidateQueries({ queryKey: ["serviceRequest"] });
+      queryClient.invalidateQueries({ queryKey: ["notifications"] });
       queryClient.invalidateQueries({ queryKey: ["analytics"] });
     },
   });
